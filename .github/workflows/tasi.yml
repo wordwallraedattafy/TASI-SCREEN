@@ -2,8 +2,8 @@ name: TASI daily data and alerts
 
 on:
   schedule:
-    - cron: "30 12 * * 0-4"
-    - cron: "*/10 7-11 * * 0-4"
+    - cron: "30 12 * * 0-4"       # daily data + signals, 15:30 Riyadh time, Sun-Thu
+    - cron: "*/10 7-11 * * 0-4"   # price alerts every ~10 minutes, 10:00-14:50 Riyadh, Sun-Thu
   workflow_dispatch:
     inputs:
       mode:
@@ -11,6 +11,10 @@ on:
         type: choice
         options: [daily, alerts]
         default: daily
+      limit:
+        description: "Test with only the first N stocks (0 = all)"
+        type: string
+        default: "0"
 
 permissions:
   contents: write
@@ -35,7 +39,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run
-        run: python tasi_daily.py "$MODE" ${{ github.event_name == 'workflow_dispatch' && '--force' || '' }}
+        run: python tasi_daily.py "$MODE" --limit "${{ inputs.limit || 0 }}" ${{ github.event_name == 'workflow_dispatch' && '--force' || '' }}
       - name: Save results
         run: |
           git config user.name "tasi-bot"
