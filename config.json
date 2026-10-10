@@ -1,0 +1,22 @@
+{
+  "include_reits": false,
+  "lookback_days": 3,
+  "signals": {
+    "ma": [20, 50, 200],
+    "rsi": { "enabled": true, "period": 14, "level": 50 },
+    "fib": [50, 61.8],
+    "fib_window": 120,
+    "fib_min_swing_pct": 10,
+    "low52": true,
+    "atl": true,
+    "below": false
+  },
+  "notify": {
+    "only_new": true,
+    "notify_on_first_run": false,
+    "min_volume_x": 0,
+    "max_lines": 15,
+    "watchlist_only": false,
+    "watchlist": []
+  }
+}

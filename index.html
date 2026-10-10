@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASI Screener: Moving Averages and New Lows</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1c2430; --muted:#6b7686; --line:#e3e7ee; --accent:#0b7a4b; --bad:#c0392b; --warn:#b7791f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#12161c; --card:#1a2028; --text:#e8ecf2; --muted:#93a0b2; --line:#2a3340; --accent:#35c486; --bad:#ff7b6b; --warn:#f0b455; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--text); }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 20px 16px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 18px; font-size: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  label { font-size: 13px; color: var(--muted); display:block; margin-bottom: 4px; }
+  textarea, input[type=password], input[type=text], select { width:100%; border:1px solid var(--line); border-radius:8px; padding:8px; background:var(--bg); color:var(--text); font-size: 13px; }
+  textarea { min-height: 80px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  input[type=number] { width: 80px; padding:6px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); }
+  .row { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; margin-top:12px; }
+  .chk { display:flex; align-items:center; gap:6px; font-size:14px; color:var(--text); margin:0; }
+  button { background: var(--accent); color:#fff; border:0; border-radius:8px; padding:9px 18px; font-size:14px; cursor:pointer; }
+  button.sec { background: transparent; color: var(--text); border:1px solid var(--line); }
+  button:disabled { opacity:.5; cursor:default; }
+  #status { font-size:13px; color:var(--muted); margin-top:10px; min-height:18px; }
+  .bar { height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin-top:8px; }
+  .bar > div { height:100%; width:0; background:var(--accent); transition: width .2s; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  h3 { font-size: 13px; color: var(--muted); margin: 14px 0 0; text-transform: uppercase; letter-spacing:.04em; }
+  .tablewrap { overflow-x:auto; }
+  table { width:100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  .up { color: var(--accent); font-weight:600; } .down { color: var(--bad); font-weight:600; }
+  .full { color: var(--accent); } .part { color: var(--warn); }
+  a { color: var(--accent); text-decoration: none; margin-right:8px; } a:hover { text-decoration: underline; }
+  tbody tr[data-code], table tr[data-code] { cursor: pointer; }
+  tr.hl td { background: rgba(255, 193, 7, .28); font-weight: 600; }
+  tr[data-code]:hover td { background: rgba(120, 140, 170, .12); }
+  tr.hl:hover td { background: rgba(255, 193, 7, .36); }
+  .badge { display:inline-block; background: var(--accent); color:#fff; font-size:10px; font-weight:700; padding:1px 5px; border-radius:4px; margin-left:6px; vertical-align:middle; }
+  .filters { display:flex; flex-wrap:wrap; gap:18px; align-items:flex-end; }
+  .filters select { width:auto; min-width:200px; }
+  .cbtn { background:transparent; border:1px solid var(--line); color:var(--text); padding:0 5px; border-radius:4px; font-size:12px; margin-left:6px; cursor:pointer; line-height:18px; }
+  .cbtn:hover { border-color: var(--accent); }
+  tr.chartrow td { background: var(--bg); white-space: normal; padding: 10px; }
+  .cap { font-size:12px; color:var(--muted); margin-top:4px; }
+  .tiles { display:grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin-bottom:12px; }
+  .tile { border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .tile small { display:block; color:var(--muted); font-size:12px; }
+  .tile b { font-size:22px; }
+  .meter { height:5px; background:var(--line); border-radius:3px; margin-top:6px; overflow:hidden; }
+  .meter i { display:block; height:100%; background:var(--accent); }
+  tr.trig td { background: rgba(53, 196, 134, .20); }
+  .errtxt { color: var(--warn); }
+  .iconbtn { background:transparent; border:1px solid var(--line); color:var(--text); border-radius:6px; padding:2px 8px; font-size:12px; cursor:pointer; margin-right:4px; }
+  .hint { font-size:12px; color:var(--muted); margin: 0 0 10px; }
+  .note { font-size:12px; color:var(--muted); line-height:1.6; }
+  .empty { color: var(--muted); font-size:14px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; }
+  .src { border:1px solid var(--line); border-radius:8px; padding:10px; }
+  .src b { font-size:14px; } .src small { display:block; color:var(--muted); font-size:12px; margin-top:2px; }
+
+  /* ---- tabs ---- */
+  .sticky { position: sticky; top: 0; z-index: 30; background: var(--bg); padding: max(8px, env(safe-area-inset-top)) 0 6px; margin-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .sticky h1 { font-size: 18px; margin: 0 0 6px; }
+  .sticky #status { margin-top: 6px; min-height: 16px; }
+  .tabs { display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; white-space: nowrap; font-size: 14px; }
+  .tab.active { background: var(--accent); color:#fff; border-color: var(--accent); }
+  .tab .cnt:not(:empty) { display:inline-block; min-width:18px; padding:0 5px; margin-left:4px; border-radius:9px; background: var(--line); color: var(--text); font-size:11px; line-height:18px; text-align:center; }
+  .tab.active .cnt:not(:empty) { background: rgba(255,255,255,.28); color:#fff; }
+  .tab .cnt.alerted { background: var(--warn); color:#fff; }
+  .panel[hidden] { display:none; }
+
+  /* ---- phone layout ---- */
+  @media (max-width: 720px) {
+    .wrap { padding: 0 10px 40px; }
+    .card { padding: 12px; border-radius: 10px; }
+    input, select, textarea { font-size: 16px !important; }
+    button { min-height: 40px; }
+    .row { gap: 12px; }
+    .row > div { flex: 1 1 130px; }
+    .row input[type=number], .row input[type=text] { width: 100% !important; }
+    .filters select { width: 100%; min-width: 0; }
+    .grid { grid-template-columns: 1fr; }
+    .tablewrap table, .tablewrap tbody, .tablewrap tr, .tablewrap td { display: block; width: 100%; }
+    .tablewrap tr:first-child { display: none; }
+    .tablewrap tr { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 10px; padding: 6px 10px; background: var(--card); }
+    .tablewrap td { display: flex; justify-content: space-between; align-items: center; gap: 12px; border: 0; padding: 4px 0; white-space: normal; text-align: right; }
+    .tablewrap td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; flex: 0 0 38%; }
+    .tablewrap td:first-child { font-weight: 700; font-size: 16px; }
+    .tablewrap tr.chartrow { border: 0; padding: 0; margin: 0 0 10px; }
+    .tablewrap tr.chartrow td { display: block; padding: 4px 0; }
+    .tablewrap tr.chartrow td::before { display: none; }
+    tr.hl { background: rgba(255, 193, 7, .18); }
+    tr.trig { background: rgba(53, 196, 134, .16); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sticky">
+    <h1>TASI Screener</h1>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="scan">Scanner <span class="cnt" id="tb_scan"></span></button>
+      <button class="tab" data-tab="market">Market</button>
+      <button class="tab" data-tab="alerts">Price alerts <span class="cnt" id="tb_alerts"></span></button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </div>
+    <div class="bar"><div id="prog"></div></div>
+    <div id="status"></div>
+  </div>
+
+  <section class="panel" id="tab-scan">
+  <p class="sub">Scans Tadawul stocks across several open data sources and lists those at a new all-time low, a new 52-week low, just crossed the 20, 50 or 200-day average, whose RSI just crossed 50, or whose price just passed the 50% or 61.8% Fibonacci retracement.</p>
+  <div class="card">
+    <label for="tickers">Tadawul codes (comma, space or new line separated)</label>
+    <textarea id="tickers"></textarea>
+    <div class="row">
+      <div><label for="days">"New" = within last N trading days</label><input type="number" id="days" value="3" min="1" max="20"></div>
+      <div><label for="conc">Parallel requests</label><input type="number" id="conc" value="6" min="1" max="12"></div>
+    </div>
+    <h3>Signals</h3>
+    <div class="row" style="margin-top:8px">
+      <label class="chk"><input type="checkbox" id="c_atl" checked> New all-time low</label>
+      <label class="chk"><input type="checkbox" id="c_low52" checked> New 52-week low</label>
+      <label class="chk"><input type="checkbox" class="ma" value="20" checked> Cross 20-day</label>
+      <label class="chk"><input type="checkbox" class="ma" value="50" checked> Cross 50-day</label>
+      <label class="chk"><input type="checkbox" class="ma" value="200" checked> Cross 200-day</label>
+      <label class="chk"><input type="checkbox" id="c_rsi" checked> RSI crosses level</label>
+      <div><label for="rsiP">RSI period</label><input type="number" id="rsiP" value="14" min="2" max="100"></div>
+      <div><label for="rsiL">RSI level</label><input type="number" id="rsiL" value="50" min="1" max="99"></div>
+      <label class="chk"><input type="checkbox" class="fib" value="38.2"> Fib 38.2%</label>
+      <label class="chk"><input type="checkbox" class="fib" value="50" checked> Fib 50%</label>
+      <label class="chk"><input type="checkbox" class="fib" value="61.8" checked> Fib 61.8%</label>
+      <div><label for="fibN">Fib swing window (days)</label><input type="number" id="fibN" value="120" min="30" max="500"></div>
+      <div><label for="fibM">Min swing size (%)</label><input type="number" id="fibM" value="10" min="1" max="90"></div>
+      <label class="chk"><input type="checkbox" id="below"> Also show crosses below (MA, RSI and Fibonacci pullbacks)</label>
+    </div>
+    <div class="row">
+      <button id="go">Scan</button>
+      <button id="stop" class="sec" disabled>Stop</button>
+      <button id="csv" class="sec" disabled>Download CSV</button>
+      <button id="clearhl" class="sec" disabled>Clear highlights</button>
+    </div>
+    
+  </div>
+
+
+  <div class="card">
+    <h2>Filters <span style="font-weight:400;color:var(--muted);font-size:13px">(apply instantly, no rescan needed)</span></h2>
+    <div class="filters">
+      <div><label for="f_sector">Sector</label><select id="f_sector"><option value="">All sectors</option></select></div>
+      <div><label for="f_vol">Min volume vs 20-day average (x)</label><input type="number" id="f_vol" value="0" min="0" step="0.5"></div>
+      <label class="chk"><input type="checkbox" id="f_new"> Only new since last scan</label>
+      <span id="prevInfo" class="note"></span>
+    </div>
+  </div>
+
+
+  <p class="hint">Click any row to highlight that share in every table. Click it again to remove the highlight.</p>
+  <div id="results"></div>
+  </section>
+
+  <section class="panel" id="tab-market" hidden>
+  <div class="card" id="breadth"></div>
+  </section>
+
+  <section class="panel" id="tab-alerts" hidden>
+  <div class="card">
+    <h2>Price alerts <span id="p_count" style="font-weight:400;color:var(--muted);font-size:13px">0 / 30</span></h2>
+    <p class="hint" style="margin-bottom:8px">Enter a share and a price. You get a notification (through the channels switched on above) when the price passes it. Each alert fires once; use Re-arm to reuse it.</p>
+    <div class="row" style="margin-top:0">
+      <div><label for="p_code">Share code</label><input type="text" id="p_code" placeholder="2222" style="width:90px"></div>
+      <div><label for="p_price">Price (SAR)</label><input type="number" id="p_price" step="0.01" min="0" style="width:110px"></div>
+      <div><label for="p_dir">Alert when price</label>
+        <select id="p_dir" style="min-width:190px"><option value="auto">Reaches the price (auto direction)</option><option value="up">Rises to the price or above</option><option value="down">Falls to the price or below</option></select></div>
+      <button id="p_add">Add alert</button>
+    </div>
+    <details style="margin-top:12px"><summary style="cursor:pointer;font-size:13px;color:var(--muted)">Add many at once (one per line: code price [up|down])</summary>
+      <textarea id="p_bulk" placeholder="2222 28.50&#10;1120 95 up&#10;7010 40 down" style="margin-top:8px"></textarea>
+      <div class="row"><button class="sec" id="p_bulk_add">Add all</button></div>
+    </details>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="p_watch"> Watch prices every</label>
+      <div><input type="number" id="p_min" value="2" min="1" max="60"></div><span class="note">minutes</span>
+      <label class="chk"><input type="checkbox" id="p_hours"> Only during market hours (Sun to Thu, about 10:00 to 15:00 Riyadh)</label>
+      <button class="sec" id="p_check">Check now</button>
+      <button class="sec" id="p_export">Export alerts.json</button>
+    </div>
+    <div id="p_status" class="note" style="margin-top:8px"></div>
+    <div class="tablewrap" id="alertList" style="margin-top:10px"></div>
+  </div>
+
+  </section>
+
+  <section class="panel" id="tab-settings" hidden>
+  <div class="card">
+    <h2>Data sources</h2>
+    <div class="grid">
+      <div class="src"><label class="chk"><input type="checkbox" id="s_file" checked> <b>Daily data file (fastest)</b></label>
+        <small>Prices saved once a day by the automation script. A scan takes seconds. If it cannot be loaded, the next source is used.</small>
+        <input type="text" id="s_file_url" value="data/tasi_data.json" style="margin-top:6px" placeholder="data/tasi_data.json or a full web address">
+        <input type="file" id="s_file_pick" accept=".json,application/json" style="margin-top:6px;font-size:12px">
+        <div id="s_file_info" class="note" style="margin-top:4px">Not loaded yet.</div></div>
+      <div class="src"><label class="chk"><input type="checkbox" id="s_y1" checked> <b>Yahoo Finance (server 1)</b></label><small>Free, no key.</small></div>
+      <div class="src"><label class="chk"><input type="checkbox" id="s_y2" checked> <b>Yahoo Finance (server 2)</b></label><small>Free, no key. Same data as server 1, used as a backup.</small></div>
+      <div class="src"><label class="chk"><input type="checkbox" id="s_td"> <b>Twelve Data</b></label>
+        <small>Independent source. Needs a free API key from twelvedata.com; check that your plan covers Tadawul (XSAU).</small>
+        <input type="password" id="k_td" placeholder="Twelve Data API key" style="margin-top:6px"></div>
+    </div>
+    <div class="row">
+      <div style="min-width:260px">
+        <label for="mode">Mode</label>
+        <select id="mode">
+          <option value="fallback">Fallback: use the first source that answers (faster)</option>
+          <option value="cross">Cross-check: query every selected source and show agreement</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="card">
+    <h2>Notifications <span style="font-weight:400;color:var(--muted);font-size:13px">(free options, sent when a scan finishes)</span></h2>
+    <div class="grid">
+      <div class="src"><label class="chk"><input type="checkbox" id="n_browser"> <b>Browser notification + sound</b></label>
+        <small>Free. Works while this page stays open.</small>
+        <button class="sec" id="n_perm" style="margin-top:6px">Allow notifications</button></div>
+      <div class="src"><label class="chk"><input type="checkbox" id="n_ntfy"> <b>ntfy (phone push)</b></label>
+        <small>Free, no account. Install the ntfy app and subscribe to the same topic name.</small>
+        <input type="text" id="n_ntfy_topic" placeholder="a long, private topic name" style="margin-top:6px"></div>
+      <div class="src"><label class="chk"><input type="checkbox" id="n_tg"> <b>Telegram bot</b></label>
+        <small>Free. Create a bot with @BotFather, send it a message, then paste its token and your chat ID.</small>
+        <input type="password" id="n_tg_token" placeholder="Bot token" style="margin-top:6px">
+        <input type="text" id="n_tg_chat" placeholder="Chat ID" style="margin-top:6px"></div>
+      <div class="src"><label class="chk"><input type="checkbox" id="n_dc"> <b>Discord webhook</b></label>
+        <small>Free. Server settings, Integrations, Webhooks, then copy the URL.</small>
+        <input type="password" id="n_dc_url" placeholder="Webhook URL" style="margin-top:6px"></div>
+    </div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="n_new" checked> Only signals that are NEW since the last scan</label>
+      <label class="chk"><input type="checkbox" id="n_hl"> Only highlighted shares (my watchlist)</label>
+      <label class="chk"><input type="checkbox" id="n_auto"> Auto-scan every</label>
+      <div><input type="number" id="n_min" value="15" min="5" max="1440"></div><span class="note">minutes</span>
+      <button class="sec" id="n_test">Send test</button>
+    </div>
+    <div id="nstatus" class="note" style="margin-top:8px">Alerts are sent when a scan finishes. Keep this page open (and the computer awake) for auto-scan to run. Tokens are stored only in this browser.</div>
+  </div>
+
+
+  <div class="card note"><h2>Notes</h2>
+    <b>Notes.</b> The "Daily data file" source reads data/tasi_data.json, which the automation script refreshes after each trading day, so scans take seconds and need no relays. Price alerts: prices come from Yahoo Finance and can be delayed (often about 15 minutes), so an alert fires when the delayed price passes your level. Between two checks the tool also looks at the day's high and low, so a quick move through your price is not missed. Alerts only run while this page is open. Notifications are sent from this page, so they only work while it is open. Browser notifications may be blocked when the file is opened from your disk; ntfy, Telegram and Discord are more reliable. Anyone who knows your ntfy topic name can read your alerts, so use a long random name. Fibonacci: the tool takes the highest high and lowest low of the swing window (default 120 days; the swing must be at least the minimum size). If the low came after the high, it levels the rebound at 38.2%, 50% and 61.8% of that drop and lists stocks whose close just crossed above the level. With "Also show crosses below" ticked, it also lists pullbacks that crossed down through a level after a rally. Opening a Fibonacci row's chart draws the swing levels. The market overview covers only the stocks you scanned, so scan the full list for a true picture; "last session" is the most recent trading day in the data. Click the chart button in a row to open a 120-day chart with the 50 and 200-day averages and the signal date. "Vol x" is the volume on the signal day divided by the average of the previous 20 days; 1.5x or more is marked as high, and high volume makes a signal more meaningful. "NEW" marks signals that were not in the last completed scan on this computer; the first scan has nothing to compare with. RSI uses Wilder's method on daily closes (period and level are adjustable; default 14 and 50). For RSI and moving-average rows, "VsReference" in the CSV is the distance from the average (%) or the points above the RSI level. Open this file from your computer in a browser. A "new low" means the day's lowest price fell below every earlier low in the window: the previous 252 trading days for the 52-week low, and the full available history for the all-time low. "All-time" only means as far back as the source's data goes (shown in the "Data since" column), and a stock needs at least a year of history to qualify. Prices are not adjusted for stock splits or capital changes, so an old split can create a false all-time low; check the chart through the links. Speed: the scan first loads 2 years of prices per stock and downloads the full history only for stocks at a new 52-week low; raise "Parallel requests" for speed, but too many can make the free relays refuse requests. Yahoo requests go through public CORS relays and can be slow or blocked. The two Yahoo options share the same data; only Twelve Data is independent. Data can be delayed. This is a screening aid, not investment advice.
+  </div>
+
+  </section>
+</div>
+
+<script>
+const DEFAULT = "1010 1020 1030 1050 1060 1080 1111 1120 1140 1150 1180 1182 1183 1201 1202 1210 1211 1212 1213 1214 1301 1302 1303 1304 1320 1321 1322 1810 1820 1830 1831 1832 1833 2001 2010 2020 2030 2040 2050 2060 2070 2080 2081 2082 2083 2090 2100 2110 2120 2130 2140 2150 2160 2170 2180 2190 2200 2210 2220 2222 2223 2230 2240 2250 2270 2280 2281 2282 2283 2290 2300 2310 2320 2330 2340 2350 2360 2370 2380 2381 2382 3001 3002 3003 3004 3005 3007 3008 3010 3020 3030 3040 3050 3060 3080 3090 3091 3092 4001 4002 4003 4004 4005 4006 4007 4008 4009 4011 4012 4013 4014 4015 4020 4030 4031 4040 4050 4051 4061 4070 4071 4072 4080 4081 4082 4090 4100 4110 4130 4140 4141 4142 4150 4160 4161 4162 4163 4164 4170 4180 4190 4191 4192 4200 4210 4220 4230 4240 4250 4260 4261 4262 4263 4270 4280 4290 4291 4292 4300 4310 4320 4321 4322 4323 5110 6001 6002 6004 6010 6012 6013 6014 6015 6020 6040 6050 6060 6070 6090 7010 7020 7030 7040 7200 7201 7202 7203 7204 8010 8012 8020 8030 8040 8050 8060 8070 8100 8120 8150 8160 8170 8180 8190 8200 8210 8230 8240 8250 8260 8270 8280 8300 8310 8311";
+const META = {"1010": ["Ribl", "Banks"], "1020": ["Bjaz", "Banks"], "1030": ["Saib", "Banks"], "1050": ["Bsfr", "Banks"], "1060": ["Sab", "Banks"], "1080": ["Anb", "Banks"], "1111": ["Tadawul Group", "Financial Services"], "1120": ["Alrajhi", "Banks"], "1140": ["Albilad", "Banks"], "1150": ["Alinma", "Banks"], "1180": ["Snb", "Banks"], "1182": ["Amlak", "Financial Services"], "1183": ["Shl", "Financial Services"], "1201": ["Takween", "Materials"], "1202": ["Mepco", "Materials"], "1210": ["Bci", "Materials"], "1211": ["Maaden", "Materials"], "1212": ["Astra Industrial", "Capital Goods"], "1213": ["Naseej", "Consumer Durables & Apparel"], "1214": ["Shaker", "Capital Goods"], "1301": ["Aslak", "Materials"], "1302": ["Bawan", "Capital Goods"], "1303": ["Eic", "Capital Goods"], "1304": ["Alyamamah Steel", "Materials"], "1320": ["Ssp", "Materials"], "1321": ["East Pipes", "Materials"], "1322": ["Amak", "Materials"], "1810": ["Seera", "Consumer Services"], "1820": ["Alhokair Group", "Consumer Services"], "1830": ["Fitness Time", "Consumer Services"], "1831": ["Maharah", "Commercial & Professional Svcs"], "1832": ["Sadr", "Commercial & Professional Svcs"], "1833": ["Almawarid", "Commercial & Professional Svcs"], "2001": ["Chemanol", "Materials"], "2010": ["Sabic", "Materials"], "2020": ["Sabic Agri-Nutrients", "Materials"], "2030": ["Sarco", "Energy"], "2040": ["Saudi Ceramics", "Capital Goods"], "2050": ["Savola Group", "Food & Beverages"], "2060": ["Tasnee", "Materials"], "2070": ["Spimaco", "Pharma & Biotech"], "2080": ["Gasco", "Utilities"], "2081": ["Awpt", "Utilities"], "2082": ["Acwa Power", "Utilities"], "2083": ["Marafiq", "Utilities"], "2090": ["Ngc", "Materials"], "2100": ["Wafrah", "Food & Beverages"], "2110": ["Saudi Cable", "Capital Goods"], "2120": ["Saic", "Financial Services"], "2130": ["Sidc", "Consumer Durables & Apparel"], "2140": ["Ayyan", "Health Care Equipment & Svcs"], "2150": ["Zoujaj", "Materials"], "2160": ["Amiantit", "Capital Goods"], "2170": ["Alujain", "Materials"], "2180": ["Fipco", "Materials"], "2190": ["Sisco Holding", "Transportation"], "2200": ["Apc", "Materials"], "2210": ["Nama Chemicals", "Materials"], "2220": ["Maadaniyah", "Materials"], "2222": ["Saudi Aramco", "Energy"], "2223": ["Luberef", "Materials"], "2230": ["Chemical", "Health Care Equipment & Svcs"], "2240": ["Zamil Indust", "Materials"], "2250": ["Siig", "Materials"], "2270": ["Sadafco", "Food & Beverages"], "2280": ["Almarai", "Food & Beverages"], "2281": ["Tanmiah", "Food & Beverages"], "2282": ["Naqi", "Food & Beverages"], "2283": ["First Mills", "Food & Beverages"], "2290": ["Yansab", "Materials"], "2300": ["Spm", "Materials"], "2310": ["Sipchem", "Materials"], "2320": ["Albabtain", "Capital Goods"], "2330": ["Advanced", "Materials"], "2340": ["Alabdullatif", "Consumer Durables & Apparel"], "2350": ["Saudi Kayan", "Materials"], "2360": ["Svcp", "Materials"], "2370": ["Mesc", "Capital Goods"], "2380": ["Petro Rabigh", "Energy"], "2381": ["Arabian Drilling", "Energy"], "2382": ["Ades", "Energy"], "3001": ["Hcc", "Materials"], "3002": ["Najran Cement", "Materials"], "3003": ["City Cement", "Materials"], "3004": ["Northern Cement", "Materials"], "3005": ["Uacc", "Materials"], "3007": ["Oasis", "Materials"], "3008": ["Alkathiri", "Materials"], "3010": ["Acc", "Materials"], "3020": ["Yscc", "Materials"], "3030": ["Saudi Cement", "Materials"], "3040": ["Qacco", "Materials"], "3050": ["Spcc", "Materials"], "3060": ["Ycc", "Materials"], "3080": ["Epcco", "Materials"], "3090": ["Tcc", "Materials"], "3091": ["Jouf Cement", "Materials"], "3092": ["Riyadh Cement", "Materials"], "4001": ["A.Othaim Market", "Consumer Staples Retail"], "4002": ["Mouwasat", "Health Care Equipment & Svcs"], "4003": ["Extra", "Consumer Discretionary Retail"], "4004": ["Dallah Health", "Health Care Equipment & Svcs"], "4005": ["Care", "Health Care Equipment & Svcs"], "4006": ["Farm Superstores", "Consumer Staples Retail"], "4007": ["Alhammadi", "Health Care Equipment & Svcs"], "4008": ["Saco", "Consumer Discretionary Retail"], "4009": ["Saudi German Health", "Health Care Equipment & Svcs"], "4011": ["Lazurde", "Consumer Durables & Apparel"], "4012": ["Alaseel", "Consumer Durables & Apparel"], "4013": ["Sulaiman Alhabib", "Health Care Equipment & Svcs"], "4014": ["Equipment House", "Health Care Equipment & Svcs"], "4015": ["Jamjoom Pharma", "Pharma & Biotech"], "4020": ["Alakaria", "Real Estate"], "4030": ["Bahri", "Energy"], "4031": ["Sgs", "Transportation"], "4040": ["Saptco", "Transportation"], "4050": ["Sasco", "Consumer Discretionary Retail"], "4051": ["Baazeem", "Consumer Discretionary Retail"], "4061": ["Anaam Holding", "Consumer Staples Retail"], "4070": ["Taprco", "Media and Entertainment"], "4071": ["Alarabia", "Media and Entertainment"], "4072": ["Mbc Group", "Media and Entertainment"], "4080": ["Sinad Holding", "Food & Beverages"], "4081": ["Nayifat", "Financial Services"], "4082": ["Mrna", "Financial Services"], "4090": ["Taiba", "Real Estate"], "4100": ["Mcdc", "Real Estate"], "4110": ["Batic", "Capital Goods"], "4130": ["Albaha", "Financial Services"], "4140": ["Sieco", "Capital Goods"], "4141": ["Alomran", "Capital Goods"], "4142": ["Riyadh Cables", "Capital Goods"], "4150": ["Ardco", "Real Estate"], "4160": ["Thimar", "Consumer Staples Retail"], "4161": ["Bindawood", "Consumer Staples Retail"], "4162": ["Almunajem", "Consumer Staples Retail"], "4163": ["Aldawaa", "Consumer Staples Retail"], "4164": ["Nahdi", "Consumer Staples Retail"], "4170": ["Teco", "Consumer Services"], "4180": ["Fitaihi Group", "Consumer Durables & Apparel"], "4190": ["Jarir", "Consumer Discretionary Retail"], "4191": ["Abo Moati", "Consumer Discretionary Retail"], "4192": ["Alsaif Gallery", "Consumer Discretionary Retail"], "4200": ["Aldrees", "Energy"], "4210": ["Srmg", "Media and Entertainment"], "4220": ["Emaar Ec", "Real Estate"], "4230": ["Red Sea", "Real Estate"], "4240": ["Cenomi Retail", "Consumer Discretionary Retail"], "4250": ["Jabal Omar", "Real Estate"], "4260": ["Budget Saudi", "Transportation"], "4261": ["Theeb", "Transportation"], "4262": ["Lumi", "Transportation"], "4263": ["Sal", "Transportation"], "4270": ["Sppc", "Commercial & Professional Svcs"], "4280": ["Kingdom", "Financial Services"], "4290": ["Alkhaleej Trng", "Consumer Services"], "4291": ["Ncle", "Consumer Services"], "4292": ["Ataa", "Consumer Services"], "4300": ["Dar Alarkan", "Real Estate"], "4310": ["Kec", "Real Estate"], "4320": ["Alandalus", "Real Estate"], "4321": ["Cenomi Centers", "Real Estate"], "4322": ["Retal", "Real Estate"], "4323": ["Sumou", "Real Estate"], "4330": ["Riyad Reit", "REITs"], "4331": ["Aljazira Reit", "REITs"], "4332": ["Jadwa Reit Alharamain", "REITs"], "4333": ["Taleem Reit", "REITs"], "4334": ["Al Maather Reit", "REITs"], "4335": ["Musharaka Reit", "REITs"], "4336": ["Mulkia Reit", "REITs"], "4337": ["Sico Saudi Reit", "REITs"], "4338": ["Alahli Reit 1", "REITs"], "4339": ["Derayah Reit", "REITs"], "4340": ["Al Rajhi Reit", "REITs"], "4342": ["Jadwa Reit Saudi", "REITs"], "4344": ["Sedco Capital Reit", "REITs"], "4345": ["Alinma Retail Reit", "REITs"], "4346": ["Mefic Reit", "REITs"], "4347": ["Bonyan Reit", "REITs"], "4348": ["Alkhabeer Reit", "REITs"], "4349": ["Alinma Hospitality Reit", "REITs"], "5110": ["Saudi Electricity", "Utilities"], "6001": ["Hb", "Food & Beverages"], "6002": ["Herfy Foods", "Consumer Services"], "6004": ["Catrion", "Commercial & Professional Svcs"], "6010": ["Nadec", "Food & Beverages"], "6012": ["Raydan", "Consumer Services"], "6013": ["Dwf", "Consumer Services"], "6014": ["Alamar", "Consumer Services"], "6015": ["Americana", "Consumer Services"], "6020": ["Gaco", "Food & Beverages"], "6040": ["Tadco", "Food & Beverages"], "6050": ["Sfico", "Food & Beverages"], "6060": ["Sharqiyah Dev", "Food & Beverages"], "6070": ["Aljouf", "Food & Beverages"], "6090": ["Jazadco", "Food & Beverages"], "7010": ["Stc", "Telecommunication"], "7020": ["Etihad Etisalat", "Telecommunication"], "7030": ["Zain Ksa", "Telecommunication"], "7040": ["Atheeb Telecom", "Telecommunication"], "7200": ["Mis", "Software & Services"], "7201": ["Arab Sea", "Software & Services"], "7202": ["Solutions", "Software & Services"], "7203": ["Elm", "Software & Services"], "7204": ["2P", "Software & Services"], "8010": ["Tawuniya", "Insurance"], "8012": ["Jazira Takaful", "Insurance"], "8020": ["Malath Insurance", "Insurance"], "8030": ["Medgulf", "Insurance"], "8040": ["Allianz Sf", "Insurance"], "8050": ["Salama", "Insurance"], "8060": ["Walaa", "Insurance"], "8070": ["Arabian Shield", "Insurance"], "8100": ["Saico", "Insurance"], "8120": ["Gulf Union Alahlia", "Insurance"], "8150": ["Acig", "Insurance"], "8160": ["Aicc", "Insurance"], "8170": ["Aletihad", "Insurance"], "8180": ["Alsagr Insurance", "Insurance"], "8190": ["Uca", "Insurance"], "8200": ["Saudi Re", "Insurance"], "8210": ["Bupa Arabia", "Insurance"], "8230": ["Alrajhi Takaful", "Insurance"], "8240": ["Chubb", "Insurance"], "8250": ["Gig", "Insurance"], "8260": ["Gulf General", "Insurance"], "8270": ["Buruj", "Insurance"], "8280": ["Liva", "Insurance"], "8300": ["Wataniya", "Insurance"], "8310": ["Amana Insurance", "Insurance"], "8311": ["Enaya", "Insurance"]}; // code -> [company, sector]
+const $ = id => document.getElementById(id);
+$("tickers").value = DEFAULT;
+
+const RELAYS = [
+  u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
+  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  u => u
+];
+
+let goodRelay = 0;
+async function fetchJSON(url) {
+  const order = [goodRelay, ...RELAYS.map((_, i) => i).filter(i => i !== goodRelay)];
+  let err;
+  for (const i of order) {
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 10000);
+    try {
+      const r = await fetch(RELAYS[i](url), { signal: ctl.signal });
+      clearTimeout(to);
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const j = await r.json();
+      goodRelay = i; // remember the relay that worked and try it first next time
+      return j;
+    } catch (e) { clearTimeout(to); err = e; }
+  }
+  throw err;
+}
+
+async function yahoo(host, code, range) {
+  const j = await fetchJSON(`https://${host}.finance.yahoo.com/v8/finance/chart/${code}.SR?range=${range}&interval=1d`);
+  const res = j.chart && j.chart.result && j.chart.result[0];
+  if (!res) throw new Error("no data");
+  const ts = res.timestamp || [], q = res.indicators.quote[0];
+  const out = [];
+  for (let i = 0; i < ts.length; i++) if (q.close[i] != null) out.push({ d: new Date(ts[i] * 1000), c: q.close[i], l: q.low && q.low[i] != null ? q.low[i] : q.close[i], h: q.high && q.high[i] != null ? q.high[i] : q.close[i], v: q.volume && q.volume[i] != null ? q.volume[i] : null });
+  if (!out.length) throw new Error("empty");
+  return out;
+}
+
+async function twelve(code, key, range) {
+  const url = `https://api.twelvedata.com/time_series?symbol=${code}&exchange=XSAU&interval=1day&outputsize=${range === "max" ? 5000 : 500}&apikey=${encodeURIComponent(key)}`;
+  const r = await fetch(url);
+  const j = await r.json();
+  if (j.status === "error" || !j.values) throw new Error(j.message || "no data");
+  return j.values.map(v => ({ d: new Date(v.datetime), c: parseFloat(v.close), l: parseFloat(v.low), h: parseFloat(v.high), v: parseFloat(v.volume) }))
+                 .filter(x => !isNaN(x.c)).map(x => ({ ...x, l: isNaN(x.l) ? x.c : x.l, h: isNaN(x.h) ? x.c : x.h })).reverse();
+}
+
+const cache = new Map(); // same stock/source/range is never downloaded twice in one session
+function cached(key, fn) {
+  if (!cache.has(key)) cache.set(key, fn().catch(e => { cache.delete(key); throw e; }));
+  return cache.get(key);
+}
+
+// ---- Daily data file (written by tasi_daily.py) ----
+let fileDb = null, filePromise = null, pickedText = null;
+async function loadFile() {
+  if (fileDb) return fileDb;
+  if (!filePromise) {
+    filePromise = (async () => {
+      let j;
+      if (pickedText) j = JSON.parse(pickedText);
+      else {
+        const r = await fetch(($("s_file_url").value.trim() || "data/tasi_data.json"), { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        j = await r.json();
+      }
+      if (!j.stocks) throw new Error("not a TASI data file");
+      fileDb = j;
+      const age = (Date.now() - new Date(j.generated).getTime()) / 86400000;
+      $("s_file_info").textContent = `Loaded: ${Object.keys(j.stocks).length} stocks, generated ${j.generated.slice(0, 16).replace("T", " ")} UTC` + (age > 3 ? ` (WARNING: ${Math.floor(age)} days old)` : "") + (j.failed && j.failed.length ? `, ${j.failed.length} failed last run` : "") + ".";
+      return j;
+    })();
+    filePromise.catch(e => { $("s_file_info").textContent = "Could not load the file (" + e.message + "). Other sources will be used. Open the page from the web address where the data file is hosted, or pick the file from your computer."; });
+  }
+  return filePromise;
+}
+const ymd = n => new Date(Date.UTC(Math.floor(n / 10000), Math.floor(n / 100) % 100 - 1, n % 100));
+async function fromFile(code, range) {
+  const db = await loadFile(), s = db.stocks[code];
+  if (!s) throw new Error("not in file");
+  const bars = s.d.map((d, i) => ({ d: ymd(d), c: s.c[i], l: s.l[i], h: s.h[i], v: s.v[i] }));
+  if (range === "max" && s.off > 0) { // older history is kept only as its lowest low, enough for the all-time-low test
+    const pre = Array.from({ length: s.off }, () => ({ d: ymd(s.since), c: s.olderMin, l: Infinity, h: 0, v: null }));
+    pre[0].l = s.olderMin;
+    return pre.concat(bars);
+  }
+  return bars;
+}
+$("s_file_pick").addEventListener("change", ev => {
+  const f = ev.target.files && ev.target.files[0]; if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { pickedText = rd.result; fileDb = null; filePromise = null; loadFile(); };
+  rd.readAsText(f);
+});
+
+function getSources() {
+  const s = [];
+  if ($("s_file").checked) s.push({ name: "DailyFile", get: (c, rg) => fromFile(c, rg) });
+  if ($("s_y1").checked) s.push({ name: "Yahoo-1", get: (c, rg) => cached("y1" + c + rg, () => yahoo("query1", c, rg)) });
+  if ($("s_y2").checked) s.push({ name: "Yahoo-2", get: (c, rg) => cached("y2" + c + rg, () => yahoo("query2", c, rg)) });
+  if ($("s_td").checked && $("k_td").value.trim()) { const k = $("k_td").value.trim(); s.push({ name: "TwelveData", get: (c, rg) => cached("td" + c + rg, () => twelve(c, k, rg)) }); }
+  return s;
+}
+
+const day = d => d.toISOString().slice(0, 10);
+
+function sma(arr, n, idx) {
+  if (idx < n - 1) return null;
+  let s = 0; for (let i = idx - n + 1; i <= idx; i++) s += arr[i].c; return s / n;
+}
+
+function rsiSeries(arr, p) { // Wilder's RSI on closing prices
+  const out = new Array(arr.length).fill(null);
+  if (arr.length <= p) return out;
+  let g = 0, l = 0;
+  for (let i = 1; i <= p; i++) { const d = arr[i].c - arr[i - 1].c; if (d >= 0) g += d; else l -= d; }
+  g /= p; l /= p;
+  out[p] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  for (let i = p + 1; i < arr.length; i++) {
+    const d = arr[i].c - arr[i - 1].c;
+    g = (g * (p - 1) + (d > 0 ? d : 0)) / p;
+    l = (l * (p - 1) + (d < 0 ? -d : 0)) / p;
+    out[i] = l === 0 ? 100 : 100 - 100 / (1 + g / l);
+  }
+  return out;
+}
+
+function relVol(data, i) { // volume on day i vs the average of the previous 20 days
+  if (i < 21) return null;
+  let s = 0, n = 0;
+  for (let j = i - 20; j < i; j++) { const v = data[j].v; if (v != null && !isNaN(v)) { s += v; n++; } }
+  const cur = data[i].v;
+  if (!n || cur == null || isNaN(cur) || s <= 0) return null;
+  return cur / (s / n);
+}
+
+function minLow(arr, from, to) { // inclusive from..to
+  let m = Infinity; for (let i = Math.max(0, from); i <= to; i++) if (arr[i].l < m) m = arr[i].l; return m;
+}
+
+function analyse(data, opt) {
+  const hits = [], last = data.length - 1, since = day(data[0].d);
+  // Moving-average crosses
+  for (const n of opt.periods) {
+    if (data.length < n + opt.lookback + 1) continue;
+    for (let k = 0; k < opt.lookback; k++) {
+      const i = last - k, a = sma(data, n, i), b = sma(data, n, i - 1);
+      if (a == null || b == null) continue;
+      const dt = data[i].c - a, dp = data[i - 1].c - b;
+      let dir = null;
+      if (dp <= 0 && dt > 0) dir = "ABOVE"; else if (opt.below && dp >= 0 && dt < 0) dir = "BELOW";
+      if (dir) {
+        const cur = sma(data, n, last);
+        hits.push({ rv: relVol(data, i), sig: "MA" + n, dir, date: day(data[i].d), close: data[last].c, ref: cur, pct: (data[last].c / cur - 1) * 100, since });
+        break;
+      }
+    }
+  }
+  // Fibonacci retracement of the latest swing (highest high / lowest low in the window)
+  if (opt.fib.length && data.length > opt.fibN + opt.lookback + 2) {
+    const from = last - opt.fibN + 1;
+    let iH = from, iL = from;
+    for (let j = from; j <= last; j++) { if (data[j].h > data[iH].h) iH = j; if (data[j].l < data[iL].l) iL = j; }
+    const H = data[iH].h, L = data[iL].l, range = H - L;
+    if (range > 0 && range / H * 100 >= opt.fibM) {
+      const down = iL > iH; // decline first, then a rebound that retraces it
+      for (const lv of opt.fib) {
+        const level = down ? L + lv / 100 * range : H - lv / 100 * range;
+        for (let k = 0; k < opt.lookback; k++) {
+          const i = last - k;
+          if (i <= (down ? iL : iH)) break; // the cross must come after the swing extreme
+          const prev = data[i - 1].c, cur = data[i].c;
+          let dir = null;
+          if (down && prev <= level && cur > level) dir = "ABOVE";
+          else if (!down && opt.below && prev >= level && cur < level) dir = "BELOW";
+          if (dir) {
+            const c = data[last].c;
+            hits.push({ rv: relVol(data, i), sig: "FIB" + lv, dir, date: day(data[i].d), close: c, ref: level, pct: (c / level - 1) * 100,
+              fibH: H, fibL: L, hDate: day(data[iH].d), lDate: day(data[iL].d), retr: (down ? (c - L) : (H - c)) / range * 100,
+              fib: `${H}|${L}|${down ? 1 : 0}`, since });
+            break;
+          }
+        }
+      }
+    }
+  }
+  // RSI crossing the chosen level
+  if (opt.rsi && data.length > opt.rsiP + opt.lookback + 2) {
+    const r = rsiSeries(data, opt.rsiP);
+    for (let k = 0; k < opt.lookback; k++) {
+      const i = last - k, a = r[i], b = r[i - 1];
+      if (a == null || b == null) continue;
+      let dir = null;
+      if (b <= opt.rsiL && a > opt.rsiL) dir = "ABOVE"; else if (opt.below && b >= opt.rsiL && a < opt.rsiL) dir = "BELOW";
+      if (dir) {
+        hits.push({ rv: relVol(data, i), sig: "RSI", dir, date: day(data[i].d), close: data[last].c, rsiPrev: b, rsiCross: a, ref: r[last], pct: r[last] - opt.rsiL, since });
+        break;
+      }
+    }
+  }
+  // New lows (need at least a year of prior history)
+  for (const [on, sig, win] of [[opt.atl, "ATL", null], [opt.low52, "LOW52", 252]]) {
+    if (!on) continue;
+    for (let k = 0; k < opt.lookback; k++) {
+      const i = last - k;
+      if (i < 252) break;
+      const prev = win ? minLow(data, i - win, i - 1) : minLow(data, 0, i - 1);
+      if (data[i].l < prev) {
+        hits.push({ rv: relVol(data, i), sig, dir: "LOW", date: day(data[i].d), low: data[i].l, close: data[last].c, ref: prev, pct: (data[i].l / prev - 1) * 100, since });
+        break;
+      }
+    }
+  }
+  return hits;
+}
+
+const breadth = new Map(), seriesStore = new Map(), openCharts = new Set();
+const hl = new Set();
+try { JSON.parse(localStorage.getItem("tasi_hl") || "[]").forEach(c => hl.add(c)); } catch (e) {}
+function saveHl() { try { localStorage.setItem("tasi_hl", JSON.stringify([...hl])); } catch (e) {} }
+function updateHlBtn() { $("clearhl").disabled = !hl.size; $("clearhl").textContent = hl.size ? `Clear highlights (${hl.size})` : "Clear highlights"; }
+$("results").addEventListener("click", ev => {
+  const cb = ev.target.closest(".cbtn");
+  if (cb) { toggleChart(cb.closest("tr")); return; }
+  if (ev.target.closest("a")) return; // let links open normally
+  const tr = ev.target.closest("tr[data-code]");
+  if (!tr) return;
+  const code = tr.dataset.code;
+  if (hl.has(code)) hl.delete(code); else hl.add(code);
+  document.querySelectorAll(`tr[data-code="${code}"]`).forEach(r => r.classList.toggle("hl", hl.has(code)));
+  saveHl(); updateHlBtn();
+});
+$("clearhl").onclick = () => {
+  hl.clear(); saveHl(); updateHlBtn();
+  document.querySelectorAll("tr.hl").forEach(r => r.classList.remove("hl"));
+};
+updateHlBtn();
+
+let rows = [], scanning = false, stopped = false, curOpt = null, renderTimer = null;
+
+function scheduleRender() {
+  if (renderTimer) return;
+  renderTimer = setTimeout(() => { renderTimer = null; render(curOpt); }, 250);
+}
+$("stop").onclick = () => { stopped = true; $("stop").disabled = true; $("status").textContent = "Stopping..."; };
+
+$("go").onclick = async () => {
+  const codes = [...new Set($("tickers").value.split(/[\s,;]+/).map(s => s.replace(/\.SR$/i, "").trim()).filter(Boolean))];
+  const opt = {
+    periods: [...document.querySelectorAll(".ma:checked")].map(x => +x.value),
+    lookback: Math.max(1, +$("days").value || 3),
+    below: $("below").checked, atl: $("c_atl").checked, low52: $("c_low52").checked,
+    fib: [...document.querySelectorAll(".fib:checked")].map(x => +x.value), fibN: Math.max(30, +$("fibN").value || 120), fibM: +$("fibM").value || 10,
+    rsi: $("c_rsi").checked, rsiP: Math.max(2, +$("rsiP").value || 14), rsiL: +$("rsiL").value || 50
+  };
+  const cross = $("mode").value === "cross", sources = getSources();
+  curOpt = opt; loadPrev();
+  cache.clear(); if (!pickedText) { fileDb = null; filePromise = null; }
+  if (!codes.length || !(opt.periods.length || opt.atl || opt.low52 || opt.rsi || opt.fib.length)) { $("status").textContent = "Add at least one code and one signal."; return; }
+  if (!sources.length) { $("status").textContent = "Select at least one data source (Twelve Data needs a key)."; return; }
+
+  breadth.clear(); seriesStore.clear(); openCharts.clear(); rows = []; $("results").innerHTML = ""; $("csv").disabled = true; $("go").disabled = true;
+  scanning = true; stopped = false; $("stop").disabled = false; $("prog").style.width = "0";
+  render(opt);
+  let done = 0; const failed = [], queue = codes.slice(), usedCount = {};
+
+  async function scan(code) {
+    const answered = [], merged = new Map();
+    for (const src of sources) {
+      try {
+        // Stage 1: 2 years of data is enough for the averages and the 52-week low
+        const d2 = await src.get(code, "2y");
+        noteStock(code, d2);
+        const hits1 = analyse(d2, { ...opt, atl: false, low52: opt.low52 || opt.atl });
+        let hits = hits1.filter(h => h.sig !== "LOW52" || opt.low52);
+        // Stage 2: full history only for stocks already at a new 52-week low (an all-time low must be one)
+        if (opt.atl && hits1.some(h => h.sig === "LOW52"))
+          hits = hits.concat(analyse(await src.get(code, "max"), { ...opt, periods: [], rsi: false, fib: [], below: false, atl: true, low52: false }));
+        answered.push(src.name); usedCount[src.name] = (usedCount[src.name] || 0) + 1;
+        for (const h of hits) {
+          const key = h.sig + "|" + h.dir;
+          if (!merged.has(key)) merged.set(key, { code, ...h, srcs: [] });
+          merged.get(key).srcs.push(src.name);
+        }
+        if (!cross) break;
+      } catch (e) { /* try next source */ }
+    }
+    if (!answered.length) failed.push(code);
+    for (const m of merged.values()) { m.answered = answered.length; rows.push(m); }
+    if (merged.size) { $("csv").disabled = false; scheduleRender(); }
+  }
+
+  async function worker() {
+    while (queue.length && !stopped) {
+      const code = queue.shift();
+      $("status").textContent = `Scanning ${code} (${done} of ${codes.length} done) | signals found so far: ${rows.length}`;
+      await scan(code); done++;
+      $("prog").style.width = (done / codes.length * 100) + "%";
+      $("status").textContent = `Scanned ${done} of ${codes.length} | signals found so far: ${rows.length}`;
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(12, Math.max(1, +$("conc").value || 6)) }, worker));
+
+  if (!stopped) { savePrev(); }
+  scanning = false; clearTimeout(renderTimer); renderTimer = null;
+  render(opt);
+  const used = Object.entries(usedCount).map(([k, v]) => `${k}: ${v}`).join(", ") || "none";
+  $("status").textContent = `${stopped ? "Stopped" : "Done"}. Scanned ${done} of ${codes.length}. ${rows.length} signal(s). Stocks loaded per source: ${used}.` + (failed.length ? ` Not loaded from any source: ${failed.join(", ")}` : "");
+  $("go").disabled = false; $("stop").disabled = true; $("csv").disabled = !rows.length;
+  if (fileDb) $("status").textContent += " | Daily file: " + fileDb.generated.slice(0, 16).replace("T", " ") + " UTC";
+  if (!stopped) notifyAfterScan();
+};
+
+// ---------- Notifications ----------
+const N_CHECKS = ["n_browser", "n_ntfy", "n_tg", "n_dc", "n_new", "n_hl", "n_auto"];
+const N_VALUES = ["n_ntfy_topic", "n_tg_token", "n_tg_chat", "n_dc_url", "n_min"];
+let autoTimer = null;
+
+function saveNotify() {
+  const o = {}; N_CHECKS.forEach(id => o[id] = $(id).checked); N_VALUES.forEach(id => o[id] = $(id).value);
+  try { localStorage.setItem("tasi_notify", JSON.stringify(o)); } catch (e) {}
+}
+function loadNotify() {
+  try {
+    const o = JSON.parse(localStorage.getItem("tasi_notify") || "null");
+    if (o) { N_CHECKS.forEach(id => { if (id in o) $(id).checked = o[id]; }); N_VALUES.forEach(id => { if (id in o) $(id).value = o[id]; }); }
+  } catch (e) {}
+}
+function setAutoTimer() {
+  clearInterval(autoTimer); autoTimer = null;
+  if ($("n_auto").checked) {
+    const m = Math.max(5, +$("n_min").value || 15);
+    autoTimer = setInterval(() => { if (!scanning) $("go").onclick(); }, m * 60000);
+    $("nstatus").textContent = `Auto-scan is on: a new scan starts every ${m} minutes while this page is open.`;
+  }
+}
+[...N_CHECKS, ...N_VALUES].forEach(id => $(id).addEventListener("input", () => { saveNotify(); if (id === "n_auto" || id === "n_min") setAutoTimer(); }));
+loadNotify(); setAutoTimer();
+
+$("n_perm").onclick = async () => {
+  if (typeof Notification === "undefined") { $("nstatus").textContent = "This browser does not support notifications."; return; }
+  const p = await Notification.requestPermission();
+  $("nstatus").textContent = p === "granted" ? "Browser notifications allowed." : "Browser notifications were not allowed (" + p + "). Use ntfy, Telegram or Discord instead.";
+};
+
+function beep() {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext, a = new C(), o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.value = 0.15; o.start();
+    setTimeout(() => { o.stop(); a.close(); }, 250);
+  } catch (e) {}
+}
+
+function sigName(r) {
+  if (r.sig.startsWith("MA")) return r.sig.slice(2) + "-day average";
+  if (r.sig === "ATL") return "new all-time low";
+  if (r.sig === "LOW52") return "new 52-week low";
+  if (r.sig === "RSI") return "RSI cross";
+  if (r.sig.startsWith("FIB")) return "Fib " + r.sig.slice(3) + "%";
+  return r.sig;
+}
+function buildMessage(list) {
+  const lines = list.slice(0, 15).map(r =>
+    `${r.code} ${META[r.code] ? META[r.code][0] : ""}: ${sigName(r)}${r.dir === "LOW" ? "" : " " + r.dir.toLowerCase()} (${r.date})${r.rv != null ? ", vol " + r.rv.toFixed(1) + "x" : ""}`);
+  if (list.length > 15) lines.push(`...and ${list.length - 15} more`);
+  return `TASI screener: ${list.length} signal(s)\n` + lines.join("\n");
+}
+
+async function sendAll(msg) {
+  const res = [];
+  if ($("n_browser").checked) {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") { try { new Notification("TASI screener", { body: msg }); beep(); res.push("browser: sent"); } catch (e) { res.push("browser: failed"); } }
+    else res.push("browser: not allowed (press Allow notifications)");
+  }
+  const post = async (name, url, opts) => { try { const r = await fetch(url, opts); res.push(name + (r.ok ? ": sent" : ": error " + r.status)); } catch (e) { res.push(name + ": failed"); } };
+  if ($("n_ntfy").checked && $("n_ntfy_topic").value.trim())
+    await post("ntfy", "https://ntfy.sh/" + encodeURIComponent($("n_ntfy_topic").value.trim()), { method: "POST", body: msg, headers: { Title: "TASI screener" } });
+  if ($("n_tg").checked && $("n_tg_token").value.trim() && $("n_tg_chat").value.trim())
+    await post("Telegram", `https://api.telegram.org/bot${$("n_tg_token").value.trim()}/sendMessage`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ chat_id: $("n_tg_chat").value.trim(), text: msg }) });
+  if ($("n_dc").checked && $("n_dc_url").value.trim())
+    await post("Discord", $("n_dc_url").value.trim(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: msg.slice(0, 1900) }) });
+  if (!res.length) res.push("no channel is switched on");
+  $("nstatus").textContent = new Date().toLocaleTimeString() + " | " + res.join(" | ");
+}
+
+function notifyAfterScan() {
+  let list = rows.slice();
+  if ($("n_new").checked) list = list.filter(isNew);
+  if ($("n_hl").checked) list = list.filter(r => hl.has(r.code));
+  if (!list.length) { $("nstatus").textContent = new Date().toLocaleTimeString() + " | Scan finished: nothing to notify" + ($("n_new").checked && !prevKeys ? " (the first scan has no earlier scan to compare with)" : "") + "."; return; }
+  sendAll(buildMessage(list));
+}
+$("n_test").onclick = () => sendAll("TASI screener: test notification. Your alerts are working.");
+
+// ---------- Price alerts (up to 30) ----------
+const ALERT_MAX = 30;
+let alerts = [], alertBusy = false, watchTimer = null;
+function loadAlerts() { try { alerts = JSON.parse(localStorage.getItem("tasi_alerts") || "[]"); } catch (e) { alerts = []; } }
+function saveAlerts() { try { localStorage.setItem("tasi_alerts", JSON.stringify(alerts)); } catch (e) {} }
+
+async function fetchQuote(code) {
+  const j = await fetchJSON(`https://query1.finance.yahoo.com/v8/finance/chart/${code}.SR?range=1d&interval=5m`);
+  const res = j.chart && j.chart.result && j.chart.result[0];
+  if (!res) throw new Error("no data");
+  const m = res.meta || {};
+  let price = m.regularMarketPrice;
+  if (price == null) { const cl = ((res.indicators.quote[0] || {}).close || []).filter(v => v != null); price = cl[cl.length - 1]; }
+  if (price == null) throw new Error("no price");
+  return { price, high: m.regularMarketDayHigh != null ? m.regularMarketDayHigh : null, low: m.regularMarketDayLow != null ? m.regularMarketDayLow : null,
+           time: m.regularMarketTime ? new Date(m.regularMarketTime * 1000) : null };
+}
+
+function marketOpen() {
+  const p = {}; new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Riyadh", weekday: "short", hour: "numeric", minute: "numeric", hour12: false })
+    .formatToParts(new Date()).forEach(x => p[x.type] = x.value);
+  const mins = (+p.hour % 24) * 60 + +p.minute;
+  return ["Sun", "Mon", "Tue", "Wed", "Thu"].includes(p.weekday) && mins >= 9 * 60 + 45 && mins <= 15 * 60 + 15;
+}
+
+function addAlert(code, target, dir) {
+  code = String(code).trim().replace(/\.SR$/i, "");
+  if (!/^\d{4}$/.test(code)) return "bad code";
+  if (!(target > 0)) return "bad price";
+  if (alerts.length >= ALERT_MAX) return "limit";
+  alerts.push({ id: Date.now() + "-" + Math.random().toString(36).slice(2, 7), code, target, dir: dir || "auto", state: "waiting", base: null, last: null, rdir: null, prevHigh: null, prevLow: null });
+  return "ok";
+}
+
+$("p_add").onclick = () => {
+  const r = addAlert($("p_code").value, +$("p_price").value, $("p_dir").value);
+  const msg = { ok: "Alert added.", "bad code": "Enter a 4-digit Tadawul code, for example 2222.", "bad price": "Enter a price above zero.", limit: `You already have ${ALERT_MAX} alerts. Remove one first.` }[r];
+  $("p_status").textContent = msg;
+  if (r === "ok") { $("p_code").value = ""; $("p_price").value = ""; saveAlerts(); renderAlerts(); checkAlerts(); }
+};
+$("p_bulk_add").onclick = () => {
+  let added = 0, skipped = 0;
+  $("p_bulk").value.split(/\n/).forEach(line => {
+    if (!line.trim()) return;
+    const m = line.match(/^\s*(\d{4})(?:\.SR)?[\s,:;=]+([\d.]+)(?:\s+(up|down|above|below))?/i);
+    if (!m) { skipped++; return; }
+    const d = m[3] ? (/^(up|above)$/i.test(m[3]) ? "up" : "down") : "auto";
+    if (addAlert(m[1], parseFloat(m[2]), d) === "ok") added++; else skipped++;
+  });
+  $("p_status").textContent = `Added ${added} alert(s)` + (skipped ? `, skipped ${skipped} (bad line or the ${ALERT_MAX}-alert limit)` : "") + ".";
+  if (added) { $("p_bulk").value = ""; saveAlerts(); renderAlerts(); checkAlerts(); }
+};
+
+$("alertList").addEventListener("click", ev => {
+  const b = ev.target.closest("button[data-act]"); if (!b) return;
+  const i = alerts.findIndex(a => a.id === b.dataset.id); if (i < 0) return;
+  if (b.dataset.act === "del") alerts.splice(i, 1);
+  else { const a = alerts[i]; a.state = "waiting"; a.base = null; a.prevHigh = a.prevLow = null; a.rdir = null; delete a.hitAt; delete a.hitPrice; }
+  saveAlerts(); renderAlerts();
+});
+
+function renderAlerts() {
+  $("p_count").textContent = `${alerts.length} / ${ALERT_MAX}`;
+  const el = $("alertList");
+  if (!alerts.length) { el.innerHTML = '<div class="empty">No price alerts yet.</div>'; return; }
+  let h = '<table><tr><th>Code</th><th>Company</th><th>Alert price</th><th>Direction</th><th>Last price</th><th>Distance</th><th>Quote time</th><th>Status</th><th></th></tr>';
+  for (const a of alerts) {
+    const dir = a.rdir || a.dir, dirTxt = dir === "up" ? "Rises to" : dir === "down" ? "Falls to" : "Auto";
+    const dist = a.last != null ? ((a.target / a.last - 1) * 100).toFixed(2) + "%" : "";
+    const st = a.state === "triggered"
+      ? `<span class="up">Triggered ${new Date(a.hitAt).toLocaleTimeString()} at ${a.hitPrice.toFixed(2)}</span>`
+      : a.err ? '<span class="errtxt">Price not loaded</span>' : a.last == null ? "Waiting for first check" : "Watching";
+    h += `<tr class="${a.state === "triggered" ? "trig" : ""}"><td>${a.code}</td><td>${META[a.code] ? META[a.code][0] : ""}</td><td>${a.target.toFixed(2)}</td><td>${dirTxt}</td><td>${a.last != null ? a.last.toFixed(2) : ""}</td><td>${dist}</td><td>${a.qt ? new Date(a.qt).toLocaleTimeString() : ""}</td><td>${st}</td>` +
+         `<td>${a.state === "triggered" ? `<button class="iconbtn" data-act="rearm" data-id="${a.id}">Re-arm</button>` : ""}<button class="iconbtn" data-act="del" data-id="${a.id}">Remove</button></td></tr>`;
+  }
+  el.innerHTML = h + "</table>";
+  labelTables(el); updateTabBadges();
+}
+
+async function checkAlerts() {
+  if (alertBusy) return;
+  const active = alerts.filter(a => a.state === "waiting");
+  if (!active.length) return;
+  alertBusy = true;
+  $("p_status").textContent = "Checking prices...";
+  const codes = [...new Set(active.map(a => a.code))], quotes = new Map(), queue = codes.slice();
+  await Promise.all(Array.from({ length: 4 }, async () => {
+    while (queue.length) { const c = queue.shift(); try { quotes.set(c, await fetchQuote(c)); } catch (e) { quotes.set(c, null); } }
+  }));
+  const fired = []; let errors = 0;
+  for (const a of active) {
+    const q = quotes.get(a.code);
+    if (!q) { a.err = true; errors++; continue; }
+    a.err = false; a.last = q.price; a.qt = q.time ? q.time.toISOString() : null;
+    if (a.base == null) a.base = q.price;
+    a.rdir = a.dir === "auto" ? (a.target >= a.base ? "up" : "down") : a.dir;
+    // "passed" = the price is at/over the level now, or the day's high/low reached it since the previous check
+    const hit = a.rdir === "up"
+      ? q.price >= a.target || (a.prevHigh != null && a.prevHigh < a.target && q.high != null && q.high >= a.target)
+      : q.price <= a.target || (a.prevLow != null && a.prevLow > a.target && q.low != null && q.low <= a.target);
+    a.prevHigh = q.high; a.prevLow = q.low;
+    if (hit) { a.state = "triggered"; a.hitAt = new Date().toISOString(); a.hitPrice = q.price; fired.push(a); }
+  }
+  saveAlerts(); renderAlerts();
+  $("p_status").textContent = `${new Date().toLocaleTimeString()} | checked ${codes.length} share(s), ${fired.length} alert(s) triggered` + (errors ? `, ${errors} price(s) not loaded` : "") + ".";
+  alertBusy = false;
+  if (fired.length) {
+    const lines = fired.map(a => `${a.code} ${META[a.code] ? META[a.code][0] : ""}: passed ${a.target.toFixed(2)} going ${a.rdir === "up" ? "up" : "down"} (price now ${a.hitPrice.toFixed(2)})`);
+    sendAll(`PRICE ALERT: ${fired.length} share(s) passed your price\n` + lines.join("\n"));
+  }
+}
+
+function setWatch() {
+  clearInterval(watchTimer); watchTimer = null;
+  try { localStorage.setItem("tasi_pwatch", JSON.stringify({ w: $("p_watch").checked, m: $("p_min").value, h: $("p_hours").checked })); } catch (e) {}
+  if ($("p_watch").checked) {
+    const m = Math.max(1, +$("p_min").value || 2);
+    watchTimer = setInterval(() => { if (!$("p_hours").checked || marketOpen()) checkAlerts(); }, m * 60000);
+  }
+}
+["p_watch", "p_min", "p_hours"].forEach(id => $(id).addEventListener("input", setWatch));
+$("p_check").onclick = () => checkAlerts();
+$("p_export").onclick = () => {
+  const out = alerts.filter(a => a.state === "waiting").map(a => ({ code: a.code, price: a.target, dir: a.dir }));
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+  a.download = "alerts.json"; a.click();
+  $("p_status").textContent = `Exported ${out.length} waiting alert(s). Upload alerts.json to your GitHub repository to run them in the background.`;
+};
+try { const w = JSON.parse(localStorage.getItem("tasi_pwatch") || "null"); if (w) { $("p_watch").checked = w.w; $("p_min").value = w.m; $("p_hours").checked = w.h; } } catch (e) {}
+loadAlerts(); renderAlerts(); setWatch();
+if ($("p_watch").checked && alerts.length) checkAlerts();
+
+function links(code) {
+  return `<a target="_blank" rel="noopener" href="https://www.tradingview.com/symbols/TADAWUL-${code}/">TradingView</a>` +
+         `<a target="_blank" rel="noopener" href="https://www.google.com/finance/quote/${code}:TADAWUL">Google</a>` +
+         `<a target="_blank" rel="noopener" href="https://finance.yahoo.com/quote/${code}.SR">Yahoo</a>`;
+}
+
+const keyOf = r => `${r.code}|${r.sig}|${r.dir}|${r.date}`;
+let prevKeys = null;
+function loadPrev() {
+  prevKeys = null;
+  try { const p = JSON.parse(localStorage.getItem("tasi_prev") || "null"); if (p && p.keys) prevKeys = new Set(p.keys); } catch (e) {}
+}
+function savePrev() {
+  try { localStorage.setItem("tasi_prev", JSON.stringify({ t: new Date().toISOString(), keys: rows.map(keyOf) })); } catch (e) {}
+}
+function showPrevInfo() {
+  let txt = "No earlier scan saved yet: the next scan will become the reference.";
+  try { const p = JSON.parse(localStorage.getItem("tasi_prev") || "null"); if (p && p.t) txt = "Reference scan: " + p.t.slice(0, 16).replace("T", " ") + " (signals not in it are tagged NEW)"; } catch (e) {}
+  $("prevInfo").textContent = txt;
+}
+const isNew = r => prevKeys ? !prevKeys.has(keyOf(r)) : false;
+function idCell(r) { return r.code + (isNew(r) ? '<span class="badge">NEW</span>' : "") + '<button class="cbtn" title="Show or hide chart">📈</button>'; }
+function volCell(r) {
+  if (r.rv == null) return '<span style="color:var(--muted)">n/a</span>';
+  return `<span class="${r.rv >= 1.5 ? "up" : ""}">${r.rv.toFixed(1)}x${r.rv >= 1.5 ? " ▲" : ""}</span>`;
+}
+function visibleRows() {
+  const sec = $("f_sector").value, minV = +$("f_vol").value || 0, onlyNew = $("f_new").checked;
+  return rows.filter(r =>
+    (!sec || (META[r.code] && META[r.code][1] === sec)) &&
+    (!minV || (r.rv != null && r.rv >= minV)) &&
+    (!onlyNew || isNew(r)));
+}
+[...new Set(Object.values(META).map(m => m[1]))].sort().forEach(s => { const o = document.createElement("option"); o.value = o.textContent = s; $("f_sector").appendChild(o); });
+["f_sector", "f_vol", "f_new"].forEach(id => $(id).addEventListener("input", () => { if (curOpt) render(curOpt); }));
+showPrevInfo(); renderBreadth();
+
+function chartSVG(code, date, fib) {
+  const d = seriesStore.get(code);
+  if (!d || d.length < 30) return "<div class='empty'>No price data available for the chart.</div>";
+  const N = 120, end = d.length, start = Math.max(0, end - N);
+  const W = 760, H = 190, pl = 46, pr = 8, pt = 10, pb = 20;
+  const close = [], s50 = [], s200 = [];
+  for (let i = start; i < end; i++) { close.push(d[i].c); s50.push(sma(d, 50, i)); s200.push(sma(d, 200, i)); }
+  const fp = fib ? fib.split("|").map(Number) : null; // [high, low, 1 = decline then rebound]
+  const vals = close.concat(s50.filter(v => v != null), s200.filter(v => v != null), fp ? [fp[0], fp[1]] : []);
+  let lo = Math.min(...vals), hi = Math.max(...vals); if (hi === lo) { hi += 1; lo -= 1; }
+  const x = k => pl + k / Math.max(1, close.length - 1) * (W - pl - pr);
+  const y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
+  const path = arr => { let s = "", pen = false; arr.forEach((v, k) => { if (v == null) { pen = false; return; } s += (pen ? "L" : "M") + x(k).toFixed(1) + " " + y(v).toFixed(1) + " "; pen = true; }); return s; };
+  let fibSvg = "";
+  if (fp) {
+    const [Hh, Ll, dn] = fp, rg = Hh - Ll;
+    for (const [lv, lab] of [[0, "0%"], [38.2, "38.2%"], [50, "50%"], [61.8, "61.8%"], [100, "100%"]]) {
+      const v = dn ? Ll + lv / 100 * rg : Hh - lv / 100 * rg, mark = lv === 50 || lv === 61.8;
+      fibSvg += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" style="stroke:var(--muted);stroke-width:${mark ? 1.2 : .6};stroke-dasharray:1 3"/><text x="${W - pr - 2}" y="${(y(v) - 2).toFixed(1)}" text-anchor="end" font-size="9" style="fill:var(--muted)">${lab} ${v.toFixed(2)}</text>`;
+    }
+  }
+  let sig = "";
+  for (let k = 0; k < close.length; k++) if (day(d[start + k].d) === date) {
+    sig = `<line x1="${x(k).toFixed(1)}" x2="${x(k).toFixed(1)}" y1="${pt}" y2="${H - pb}" style="stroke:var(--warn);stroke-width:1.5"/><circle cx="${x(k).toFixed(1)}" cy="${y(close[k]).toFixed(1)}" r="3.5" style="fill:var(--warn)"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block">
+    <line x1="${pl}" x2="${W - pr}" y1="${H - pb}" y2="${H - pb}" style="stroke:var(--line)"/>
+    <line x1="${pl}" x2="${pl}" y1="${pt}" y2="${H - pb}" style="stroke:var(--line)"/>
+    <text x="${pl - 4}" y="${pt + 8}" text-anchor="end" font-size="10" style="fill:var(--muted)">${hi.toFixed(2)}</text>
+    <text x="${pl - 4}" y="${H - pb}" text-anchor="end" font-size="10" style="fill:var(--muted)">${lo.toFixed(2)}</text>
+    <text x="${pl}" y="${H - 5}" font-size="10" style="fill:var(--muted)">${day(d[start].d)}</text>
+    <text x="${W - pr}" y="${H - 5}" text-anchor="end" font-size="10" style="fill:var(--muted)">${day(d[end - 1].d)}</text>
+    ${fibSvg}
+    <path d="${path(s200)}" fill="none" style="stroke:var(--bad);stroke-width:1.2;stroke-dasharray:2 3"/>
+    <path d="${path(s50)}" fill="none" style="stroke:var(--warn);stroke-width:1.2;stroke-dasharray:6 3;opacity:.9"/>
+    <path d="${path(close)}" fill="none" style="stroke:var(--accent);stroke-width:1.8"/>
+    ${sig}
+  </svg>
+  <div class="cap">${code}: last 120 trading days. Green line = close, dashed = 50-day average, dotted red = 200-day average, yellow marker = signal date.</div>`;
+}
+
+function insertChart(tr) {
+  const row = document.createElement("tr");
+  row.className = "chartrow";
+  row.innerHTML = `<td colspan="${tr.children.length}">${chartSVG(tr.dataset.code, tr.dataset.date, tr.dataset.fib)}</td>`;
+  tr.after(row);
+}
+function toggleChart(tr) {
+  const key = tr.closest(".card").dataset.sig + "|" + tr.dataset.code;
+  const nxt = tr.nextElementSibling;
+  if (nxt && nxt.classList.contains("chartrow")) { nxt.remove(); openCharts.delete(key); }
+  else { insertChart(tr); openCharts.add(key); }
+}
+function restoreCharts(card, sig) {
+  card.querySelectorAll("tr[data-code]").forEach(tr => { if (openCharts.has(sig + "|" + tr.dataset.code)) insertChart(tr); });
+}
+
+function noteStock(code, d) { // market-breadth inputs and chart data, once per stock
+  if (breadth.has(code) || d.length < 2) return;
+  const i = d.length - 1, c = d[i].c, f = n => { const s = sma(d, n, i); return s == null ? null : c > s; };
+  breadth.set(code, { a20: f(20), a50: f(50), a200: f(200), chg: c / d[i - 1].c - 1 });
+  seriesStore.set(code, d);
+}
+
+function renderBreadth() {
+  const el = $("breadth"), arr = [...breadth.entries()];
+  if (!arr.length) { el.innerHTML = '<h2>Market overview</h2><div class="empty">Run a scan to see how broad the market is.</div>'; return; }
+  const pct = (list, f) => { const v = list.filter(([c, b]) => b[f] != null); return v.length ? Math.round(v.filter(([c, b]) => b[f]).length / v.length * 100) : null; };
+  const tile = (label, p) => `<div class="tile"><small>${label}</small><b>${p == null ? "n/a" : p + "%"}</b><div class="meter"><i style="width:${p || 0}%"></i></div></div>`;
+  const adv = arr.filter(([c, b]) => b.chg > 0).length, dec = arr.filter(([c, b]) => b.chg < 0).length;
+  const p50 = pct(arr, "a50");
+  const mood = p50 == null ? "" : p50 >= 70 ? "Broad strength: most stocks are above their 50-day average." : p50 <= 30 ? "Broad weakness: most stocks are below their 50-day average." : "Mixed market: no clear majority above or below the 50-day average.";
+  const secs = {};
+  arr.forEach(([c, b]) => { const s = META[c] ? META[c][1] : "Other"; (secs[s] = secs[s] || []).push([c, b]); });
+  const rowsHtml = Object.entries(secs).sort((a, b) => b[1].length - a[1].length).map(([s, l]) => {
+    const avg = l.reduce((x, [c, b]) => x + b.chg, 0) / l.length * 100;
+    const a = pct(l, "a50"), b2 = pct(l, "a200");
+    return `<tr><td>${s}</td><td>${l.length}</td><td>${a == null ? "n/a" : a + "%"}</td><td>${b2 == null ? "n/a" : b2 + "%"}</td><td class="${avg >= 0 ? "up" : "down"}">${avg.toFixed(2)}%</td></tr>`;
+  }).join("");
+  el.innerHTML = `<h2>Market overview <span style="font-weight:400;color:var(--muted);font-size:13px">(${arr.length} stocks scanned${scanning ? ", updating" : ""})</span></h2>
+    <div class="tiles">${tile("Above 20-day average", pct(arr, "a20"))}${tile("Above 50-day average", p50)}${tile("Above 200-day average", pct(arr, "a200"))}
+      <div class="tile"><small>Last session: up / down</small><b><span class="up">${adv}</span> / <span class="down">${dec}</span></b><div class="meter"><i style="width:${Math.round(adv / Math.max(1, adv + dec) * 100)}%"></i></div></div></div>
+    <div class="note" style="margin-bottom:8px">${mood}</div>
+    <div class="tablewrap"><table><tr><th>Sector</th><th>Stocks</th><th>Above 50-day</th><th>Above 200-day</th><th>Avg last-session change</th></tr>${rowsHtml}</table></div>`;
+  labelTables(el);
+}
+
+function agree(r) {
+  return `<span class="${r.srcs.length === r.answered ? "full" : "part"}">${r.srcs.join(", ")} (${r.srcs.length}/${r.answered})</span>`;
+}
+
+function render(opt) {
+  renderBreadth(); updateTabBadges();
+  const el = $("results"); el.innerHTML = "";
+  const sections = [];
+  if (opt.atl) sections.push({ sig: "ATL", title: "New all-time low", low: true });
+  if (opt.low52) sections.push({ sig: "LOW52", title: "New 52-week low", low: true });
+  for (const n of opt.periods) sections.push({ sig: "MA" + n, title: `Crossed ${n}-day moving average`, n });
+  for (const lv of opt.fib) sections.push({ sig: "FIB" + lv, title: `Price crossed the ${lv}% Fibonacci retracement`, fibLv: lv });
+  if (opt.rsi) sections.push({ sig: "RSI", title: `RSI(${opt.rsiP}) crossed ${opt.rsiL}`, rsi: true });
+
+  for (const s of sections) {
+    const list = visibleRows().filter(r => r.sig === s.sig).sort((a, b) => b.date.localeCompare(a.date) || a.pct - b.pct);
+    const card = document.createElement("div"); card.className = "card"; card.dataset.sig = s.sig;
+    let html = `<h2>${s.title} (${list.length})</h2>`;
+    if (!list.length) html += `<div class="empty">${scanning ? "Searching... none found yet." : "No stocks found."}</div>`;
+    else if (s.fibLv) {
+      html += `<div class="tablewrap"><table><tr><th>Code</th><th>Company</th><th>Sector</th><th>Cross</th><th>Date</th><th>Swing high</th><th>Swing low</th><th>${s.fibLv}% level</th><th>Close</th><th>% vs level</th><th>Retraced</th><th>Vol x</th><th>Sources</th><th>Open on</th></tr>`;
+      for (const r of list)
+        html += `<tr data-code="${r.code}" data-date="${r.date}" data-fib="${r.fib}" class="${hl.has(r.code) ? "hl" : ""}"><td>${idCell(r)}</td><td>${META[r.code] ? META[r.code][0] : ""}</td><td>${META[r.code] ? META[r.code][1] : ""}</td><td class="${r.dir === "ABOVE" ? "up" : "down"}">${r.dir}</td><td>${r.date}</td><td>${r.fibH.toFixed(2)} (${r.hDate})</td><td>${r.fibL.toFixed(2)} (${r.lDate})</td><td>${r.ref.toFixed(2)}</td><td>${r.close.toFixed(2)}</td><td>${r.pct.toFixed(2)}%</td><td>${r.retr.toFixed(0)}%</td><td>${volCell(r)}</td><td>${agree(r)}</td><td>${links(r.code)}</td></tr>`;
+      html += `</table></div>`;
+    } else if (s.rsi) {
+      html += `<div class="tablewrap"><table><tr><th>Code</th><th>Company</th><th>Sector</th><th>Cross</th><th>Date</th><th>RSI before</th><th>RSI on cross day</th><th>RSI now</th><th>Close</th><th>Vol x</th><th>Sources</th><th>Open on</th></tr>`;
+      for (const r of list)
+        html += `<tr data-code="${r.code}" data-date="${r.date}" data-fib="" class="${hl.has(r.code) ? "hl" : ""}"><td>${idCell(r)}</td><td>${META[r.code] ? META[r.code][0] : ""}</td><td>${META[r.code] ? META[r.code][1] : ""}</td><td class="${r.dir === "ABOVE" ? "up" : "down"}">${r.dir}</td><td>${r.date}</td><td>${r.rsiPrev.toFixed(1)}</td><td>${r.rsiCross.toFixed(1)}</td><td>${r.ref.toFixed(1)}</td><td>${r.close.toFixed(2)}</td><td>${volCell(r)}</td><td>${agree(r)}</td><td>${links(r.code)}</td></tr>`;
+      html += `</table></div>`;
+    } else if (s.low) {
+      html += `<div class="tablewrap"><table><tr><th>Code</th><th>Company</th><th>Sector</th><th>Date</th><th>New low</th><th>Previous low</th><th>% below prev</th><th>Last close</th><th>Data since</th><th>Vol x</th><th>Sources</th><th>Open on</th></tr>`;
+      for (const r of list)
+        html += `<tr data-code="${r.code}" data-date="${r.date}" data-fib="" class="${hl.has(r.code) ? "hl" : ""}"><td>${idCell(r)}</td><td>${META[r.code] ? META[r.code][0] : ""}</td><td>${META[r.code] ? META[r.code][1] : ""}</td><td>${r.date}</td><td class="down">${r.low.toFixed(2)}</td><td>${r.ref.toFixed(2)}</td><td>${r.pct.toFixed(2)}%</td><td>${r.close.toFixed(2)}</td><td>${r.since}</td><td>${volCell(r)}</td><td>${agree(r)}</td><td>${links(r.code)}</td></tr>`;
+      html += `</table></div>`;
+    } else {
+      html += `<div class="tablewrap"><table><tr><th>Code</th><th>Company</th><th>Sector</th><th>Cross</th><th>Date</th><th>Close</th><th>SMA ${s.n}</th><th>% vs SMA</th><th>Vol x</th><th>Sources</th><th>Open on</th></tr>`;
+      for (const r of list)
+        html += `<tr data-code="${r.code}" data-date="${r.date}" data-fib="" class="${hl.has(r.code) ? "hl" : ""}"><td>${idCell(r)}</td><td>${META[r.code] ? META[r.code][0] : ""}</td><td>${META[r.code] ? META[r.code][1] : ""}</td><td class="${r.dir === "ABOVE" ? "up" : "down"}">${r.dir}</td><td>${r.date}</td><td>${r.close.toFixed(2)}</td><td>${r.ref.toFixed(2)}</td><td>${r.pct.toFixed(2)}%</td><td>${volCell(r)}</td><td>${agree(r)}</td><td>${links(r.code)}</td></tr>`;
+      html += `</table></div>`;
+    }
+    card.innerHTML = html; el.appendChild(card); restoreCharts(card, s.sig); labelTables(card);
+  }
+}
+
+$("csv").onclick = () => {
+  const head = "Code,Company,Sector,Signal,Direction,Date,LastClose,Reference,VsReference,VolumeX,New,DataSince,Sources";
+  const body = visibleRows().map(r => [r.code, `"${META[r.code] ? META[r.code][0] : ""}"`, `"${META[r.code] ? META[r.code][1] : ""}"`, r.sig, r.dir, r.date, r.close.toFixed(2), r.ref.toFixed(2), r.pct.toFixed(2), r.rv == null ? "" : r.rv.toFixed(2), isNew(r) ? "NEW" : "", r.since, `"${r.srcs.join(" | ")}"`].join(","));
+  const blob = new Blob(["\ufeff" + [head, ...body].join("\n")], { type: "text/csv" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "tasi_signals.csv"; a.click();
+};
+
+// ---------- Tabs and phone-friendly tables ----------
+function showTab(name) {
+  document.querySelectorAll(".panel").forEach(p => { p.hidden = p.id !== "tab-" + name; });
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+  try { localStorage.setItem("tasi_tab", name); } catch (e) {}
+}
+document.querySelectorAll(".tab").forEach(b => { b.onclick = () => { showTab(b.dataset.tab); window.scrollTo(0, 0); }; });
+let savedTab = "scan"; try { savedTab = localStorage.getItem("tasi_tab") || "scan"; } catch (e) {}
+showTab(["scan", "market", "alerts", "settings"].includes(savedTab) ? savedTab : "scan");
+
+function labelTables(root) { // lets the phone layout show "Label: value" for every cell
+  root.querySelectorAll("table").forEach(tb => {
+    const heads = [...tb.rows[0].cells].map(c => c.textContent.trim());
+    [...tb.rows].slice(1).forEach(tr => {
+      if (tr.classList.contains("chartrow")) return;
+      [...tr.cells].forEach((td, i) => td.setAttribute("data-label", heads[i] || ""));
+    });
+  });
+}
+function updateTabBadges() {
+  $("tb_scan").textContent = rows.length ? String(rows.length) : "";
+  const trig = alerts.filter(a => a.state === "triggered").length;
+  $("tb_alerts").textContent = trig ? String(trig) : (alerts.length ? String(alerts.length) : "");
+  $("tb_alerts").classList.toggle("alerted", trig > 0);
+}
+</script>
+</body>
+</html>

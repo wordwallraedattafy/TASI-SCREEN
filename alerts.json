@@ -1,0 +1,5 @@
+[
+  { "code": "2222", "price": 28.50, "dir": "auto" },
+  { "code": "1120", "price": 95.00, "dir": "up" },
+  { "code": "7010", "price": 40.00, "dir": "down" }
+]
