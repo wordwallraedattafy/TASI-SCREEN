@@ -25,6 +25,7 @@ import json
 import os
 import random
 import sys
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -98,7 +99,13 @@ def load_stocks(cfg):
     return stocks
 
 
-def http_get_json(url, retries=4, timeout=30):
+def err_text(e):
+    if isinstance(e, urllib.error.HTTPError):
+        return f"HTTP {e.code}"
+    return f"{type(e).__name__}: {e}"[:120]
+
+
+def http_get_json(url, retries=2, timeout=12):
     last = None
     for attempt in range(retries):
         try:
@@ -109,9 +116,10 @@ def http_get_json(url, retries=4, timeout=30):
             last = e
             if e.code == 404:
                 raise
-        except (urllib.error.URLError, TimeoutError, ValueError) as e:
+        except (urllib.error.URLError, OSError, ValueError) as e:
             last = e
-        time.sleep((2 ** attempt) + random.random())
+        if attempt < retries - 1:
+            time.sleep(1 + attempt + random.random())
     raise last
 
 
@@ -127,9 +135,9 @@ def day_str(d):
 # --------------------------------------------------------------- downloads
 def fetch_history(code):
     last = None
-    for host in ("query1", "query2"):
+    for host, tries in (("query1", 2), ("query2", 1)):
         try:
-            j = http_get_json(f"https://{host}.finance.yahoo.com/v8/finance/chart/{code}.SR?range=max&interval=1d")
+            j = http_get_json(f"https://{host}.finance.yahoo.com/v8/finance/chart/{code}.SR?range=max&interval=1d", retries=tries)
             return parse_history(j)
         except Exception as e:  # try the other host
             last = e
@@ -161,15 +169,38 @@ def parse_history(j):
     }
 
 
-def download_all(stocks, previous, workers=6):
+def download_all(stocks, previous, workers=4):
+    """Download every stock. Gives up early when Yahoo refuses us, and never runs longer than the time budget."""
     out, failed = {}, []
+    deadline = time.time() + float(os.environ.get("TASI_BUDGET_MIN", "12")) * 60
+    lock = threading.Lock()
+    st = {"ok": 0, "bad": 0, "abort": False, "first_err": None}
+    total = len(stocks)
 
     def job(code):
-        time.sleep(random.random() * 0.4)
+        if st["abort"]:
+            return code, None, RuntimeError("skipped: Yahoo is refusing requests")
+        if time.time() > deadline:
+            return code, None, TimeoutError("time budget used up")
+        time.sleep(random.random() * 0.3)
+        rec = err = None
         try:
-            return code, fetch_history(code), None
+            rec = fetch_history(code)
         except Exception as e:
-            return code, None, e
+            err = e
+        with lock:
+            if rec:
+                st["ok"] += 1
+            else:
+                st["bad"] += 1
+                if st["first_err"] is None:
+                    st["first_err"] = err_text(err)
+                if st["ok"] == 0 and st["bad"] >= 10:
+                    st["abort"] = True
+            n = st["ok"] + st["bad"]
+            if n % 20 == 0 or n == total:
+                print(f"  progress {n}/{total} (ok {st['ok']}, failed {st['bad']})", flush=True)
+        return code, rec, err
 
     with ThreadPoolExecutor(max_workers=workers) as ex:
         for code, rec, err in ex.map(job, list(stocks)):
@@ -179,8 +210,7 @@ def download_all(stocks, previous, workers=6):
                 failed.append(code)
                 if code in previous:          # keep the older copy rather than lose the stock
                     out[code] = dict(previous[code], stale=True)
-                print(f"  could not load {code}: {err}", file=sys.stderr)
-    return out, failed
+    return out, failed, st
 
 
 # ----------------------------------------------------------------- signals
@@ -369,9 +399,15 @@ def run_daily(args):
         stocks = dict(list(stocks.items())[:args.limit])
     prev_db = load_json(DATA_FILE, {}).get("stocks", {})
     print(f"Downloading {len(stocks)} stocks...")
-    data, failed = download_all(stocks, prev_db)
+    data, failed, info = download_all(stocks, prev_db)
+    if info["abort"] or info["ok"] == 0:
+        print("\nYahoo Finance is refusing or not answering requests from this server "
+              f"(first error: {info['first_err'] or 'time budget used up'}).\n"
+              "This sometimes happens on GitHub's servers. Try again later, or run this script on your own "
+              "computer (python tasi_daily.py daily) and upload data/tasi_data.json to the repository.", file=sys.stderr)
+        return 1
     if len(failed) > len(stocks) * 0.6:
-        print("More than 60% of downloads failed; keeping the old data file.", file=sys.stderr)
+        print(f"More than 60% of downloads failed (first error: {info['first_err']}); keeping the old data file.", file=sys.stderr)
         return 1
     DATA_DIR.mkdir(exist_ok=True)
     payload = {"generated": datetime.now(timezone.utc).isoformat(timespec="seconds"), "keep": KEEP,
