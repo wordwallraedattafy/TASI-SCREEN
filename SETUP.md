@@ -8,6 +8,7 @@ This gives you two things:
 | File | Purpose |
 |---|---|
 | `index.html` | The screener page (host it, or open it from your computer) |
+| `icon-192.png`, `icon-512.png`, `icon.svg`, `manifest.webmanifest` | The app icon used when you save the page as a shortcut |
 | `tasi_daily.py` | The script (no installation needed, standard Python only) |
 | `config.json` | Which signals to watch and how to notify |
 | `alerts.json` | Your price alerts (edit, or export from the page) |
@@ -49,3 +50,10 @@ To reset a price alert that already fired, delete its entry in `state.json` (or 
 - *Actions* tab shows each run and its log. A red run usually means Yahoo refused the download; the script keeps the previous data and tries again at the next run.
 - GitHub pauses scheduled runs in a repository with no activity for 60 days. The daily data commit counts as activity, but if runs stop, press *Enable workflow* in the Actions tab.
 - This is a screening aid, not investment advice.
+
+## Saving the page as a shortcut with its icon
+Open your GitHub Pages address (not the file from your disk), then:
+- **iPhone (Safari):** Share button, then *Add to Home Screen*.
+- **Android (Chrome):** the three-dot menu, then *Install app* or *Add to Home screen*.
+- **Windows or Mac (Chrome or Edge):** the install icon in the address bar, or menu, *Save and share* (Chrome) / *Apps* (Edge), then *Install*.
+The green chart icon is used for the shortcut. Upload `icon-192.png`, `icon-512.png` and `manifest.webmanifest` next to `index.html` in the repository so the installed app also gets the icon and name.

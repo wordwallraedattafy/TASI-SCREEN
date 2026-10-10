@@ -489,7 +489,7 @@ def fetch_quote(code):
 
 
 def alert_key(a):
-    return f"{a['code']}|{a['price']}|{a.get('dir', 'auto')}"
+    return f"{a['code']}|{float(a['price']):.10g}|{a.get('dir', 'auto')}"
 
 
 def evaluate_alert(a, st, q):
@@ -540,7 +540,7 @@ def run_alerts(args):
             st.update(status="triggered", hit_price=q["price"], hit_at=datetime.now(timezone.utc).isoformat(timespec="seconds"))
             fired.append((a, st))
     if fired:
-        lines = [f"{a['code']} {names.get(a['code'], '')}: passed {float(a['price']):.2f} going "
+        lines = [f"\U0001F7E2 {a['code']} {names.get(a['code'], '')}: passed {float(a['price']):.2f} going "
                  f"{'up' if st['rdir'] == 'up' else 'down'} (price now {st['hit_price']:.2f})" for a, st in fired]
         notify(f"PRICE ALERT: {len(fired)} share(s) passed your price\n" + "\n".join(lines), args.dry_run)
     else:
@@ -556,6 +556,11 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+    for stream in (sys.stdout, sys.stderr):   # emoji-safe output on Windows consoles
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     sys.exit(run_daily(args) if args.mode == "daily" else run_alerts(args))
 
 
