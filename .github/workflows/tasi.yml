@@ -1,1 +1,51 @@
+name: TASI daily data and alerts
 
+on:
+  schedule:
+    - cron: "30 12 * * 0-4"
+    - cron: "*/10 7-11 * * 0-4"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "What to run"
+        type: choice
+        options: [daily, alerts]
+        default: daily
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tasi
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MODE: ${{ inputs.mode || (github.event.schedule == '30 12 * * 0-4' && 'daily' || 'alerts') }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run
+        run: python tasi_daily.py "$MODE" ${{ github.event_name == 'workflow_dispatch' && '--force' || '' }}
+      - name: Save results
+        run: |
+          git config user.name "tasi-bot"
+          git config user.email "tasi-bot@users.noreply.github.com"
+          if [ -d data ]; then git add -A data; fi
+          if [ -f state.json ]; then git add state.json; fi
+          if git diff --cached --quiet; then
+            echo "No changes to save."
+          else
+            git commit -m "TASI $MODE update"
+            git pull --rebase --autostash
+            git push
+          fi
