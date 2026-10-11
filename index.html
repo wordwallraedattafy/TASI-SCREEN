@@ -120,6 +120,7 @@
     <div class="tabs" role="tablist">
       <button class="tab active" data-tab="scan">Scanner <span class="cnt" id="tb_scan"></span></button>
       <button class="tab" data-tab="market">Market</button>
+      <button class="tab" data-tab="dividends">Dividends</button>
       <button class="tab" data-tab="alerts">Price alerts <span class="cnt" id="tb_alerts"></span></button>
       <button class="tab" data-tab="settings">Settings</button>
     </div>
@@ -180,6 +181,22 @@
 
   <section class="panel" id="tab-market" hidden>
   <div class="card" id="breadth"></div>
+  </section>
+
+  <section class="panel" id="tab-dividends" hidden>
+    <div class="card">
+      <h2>Dividends</h2>
+      <p class="hint" style="margin-bottom:8px">Search a share by code or name. The window shows the last 2 dividends for shares that pay every 6 months, and the last 4 for shares that pay every 3 months (the last 1 for yearly payers).</p>
+      <div class="row" style="margin-top:0">
+        <div style="flex:1 1 260px"><label for="d_q">Share code or company name</label><input type="text" id="d_q" list="dl_shares" placeholder="2222 or Aramco" style="width:100%"></div>
+        <div><label for="d_n">How many to show</label>
+          <select id="d_n" style="min-width:150px"><option value="auto">Automatic (by frequency)</option><option value="1">Last 1</option><option value="2">Last 2</option><option value="4">Last 4</option><option value="8">Last 8</option></select></div>
+        <button id="d_go">Search</button>
+      </div>
+      <datalist id="dl_shares"></datalist>
+      <div id="d_status" class="note" style="margin-top:8px"></div>
+    </div>
+    <div id="d_out"></div>
   </section>
 
   <section class="panel" id="tab-alerts" hidden>
@@ -266,7 +283,7 @@
 
 
   <div class="card note"><h2>Notes</h2>
-    <b>Notes.</b> A green tick before a share in the Price alerts tab means its price has passed your alert price; the same green mark starts each line of the notification. Alerts fired by the GitHub background check are marked too (the page reads state.json). The "Daily data file" source reads data/tasi_data.json, which the automation script refreshes after each trading day, so scans take seconds and need no relays. Price alerts: prices come from Yahoo Finance and can be delayed (often about 15 minutes), so an alert fires when the delayed price passes your level. Between two checks the tool also looks at the day's high and low, so a quick move through your price is not missed. Alerts only run while this page is open. Notifications are sent from this page, so they only work while it is open. Browser notifications may be blocked when the file is opened from your disk; ntfy, Telegram and Discord are more reliable. Anyone who knows your ntfy topic name can read your alerts, so use a long random name. Fibonacci: the tool takes the highest high and lowest low of the swing window (default 120 days; the swing must be at least the minimum size). If the low came after the high, it levels the rebound at 38.2%, 50% and 61.8% of that drop and lists stocks whose close just crossed above the level. With "Also show crosses below" ticked, it also lists pullbacks that crossed down through a level after a rally. Opening a Fibonacci row's chart draws the swing levels. The market overview covers only the stocks you scanned, so scan the full list for a true picture; "last session" is the most recent trading day in the data. Click the chart button in a row to open a 120-day chart with the 50 and 200-day averages and the signal date. "Vol x" is the volume on the signal day divided by the average of the previous 20 days; 1.5x or more is marked as high, and high volume makes a signal more meaningful. "NEW" marks signals that were not in the last completed scan on this computer; the first scan has nothing to compare with. RSI uses Wilder's method on daily closes (period and level are adjustable; default 14 and 50). For RSI and moving-average rows, "VsReference" in the CSV is the distance from the average (%) or the points above the RSI level. Open this file from your computer in a browser. A "new low" means the day's lowest price fell below every earlier low in the window: the previous 252 trading days for the 52-week low, and the full available history for the all-time low. "All-time" only means as far back as the source's data goes (shown in the "Data since" column), and a stock needs at least a year of history to qualify. Prices are not adjusted for stock splits or capital changes, so an old split can create a false all-time low; check the chart through the links. Speed: the scan first loads 2 years of prices per stock and downloads the full history only for stocks at a new 52-week low; raise "Parallel requests" for speed, but too many can make the free relays refuse requests. Yahoo requests go through public CORS relays and can be slow or blocked. The two Yahoo options share the same data; only Twelve Data is independent. Data can be delayed. This is a screening aid, not investment advice.
+    <b>Notes.</b> The Dividends tab reads dividends from the daily data file when it has them, otherwise live from Yahoo Finance; the 💰 button in a result row opens it for that share. A green tick before a share in the Price alerts tab means its price has passed your alert price; the same green mark starts each line of the notification. Alerts fired by the GitHub background check are marked too (the page reads state.json). The "Daily data file" source reads data/tasi_data.json, which the automation script refreshes after each trading day, so scans take seconds and need no relays. Price alerts: prices come from Yahoo Finance and can be delayed (often about 15 minutes), so an alert fires when the delayed price passes your level. Between two checks the tool also looks at the day's high and low, so a quick move through your price is not missed. Alerts only run while this page is open. Notifications are sent from this page, so they only work while it is open. Browser notifications may be blocked when the file is opened from your disk; ntfy, Telegram and Discord are more reliable. Anyone who knows your ntfy topic name can read your alerts, so use a long random name. Fibonacci: the tool takes the highest high and lowest low of the swing window (default 120 days; the swing must be at least the minimum size). If the low came after the high, it levels the rebound at 38.2%, 50% and 61.8% of that drop and lists stocks whose close just crossed above the level. With "Also show crosses below" ticked, it also lists pullbacks that crossed down through a level after a rally. Opening a Fibonacci row's chart draws the swing levels. The market overview covers only the stocks you scanned, so scan the full list for a true picture; "last session" is the most recent trading day in the data. Click the chart button in a row to open a 120-day chart with the 50 and 200-day averages and the signal date. "Vol x" is the volume on the signal day divided by the average of the previous 20 days; 1.5x or more is marked as high, and high volume makes a signal more meaningful. "NEW" marks signals that were not in the last completed scan on this computer; the first scan has nothing to compare with. RSI uses Wilder's method on daily closes (period and level are adjustable; default 14 and 50). For RSI and moving-average rows, "VsReference" in the CSV is the distance from the average (%) or the points above the RSI level. Open this file from your computer in a browser. A "new low" means the day's lowest price fell below every earlier low in the window: the previous 252 trading days for the 52-week low, and the full available history for the all-time low. "All-time" only means as far back as the source's data goes (shown in the "Data since" column), and a stock needs at least a year of history to qualify. Prices are not adjusted for stock splits or capital changes, so an old split can create a false all-time low; check the chart through the links. Speed: the scan first loads 2 years of prices per stock and downloads the full history only for stocks at a new 52-week low; raise "Parallel requests" for speed, but too many can make the free relays refuse requests. Yahoo requests go through public CORS relays and can be slow or blocked. The two Yahoo options share the same data; only Twelve Data is independent. Data can be delayed. This is a screening aid, not investment advice.
   </div>
 
   </section>
@@ -281,13 +298,15 @@ $("tickers").value = DEFAULT;
 const RELAYS = [
   u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
   u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  u => "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent(u),
+  u => "https://thingproxy.freeboard.io/fetch/" + u,
   u => u
 ];
 
 let goodRelay = 0;
 async function fetchJSON(url) {
   const order = [goodRelay, ...RELAYS.map((_, i) => i).filter(i => i !== goodRelay)];
-  let err;
+  const reasons = [];
   for (const i of order) {
     const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 10000);
     try {
@@ -297,9 +316,9 @@ async function fetchJSON(url) {
       const j = await r.json();
       goodRelay = i; // remember the relay that worked and try it first next time
       return j;
-    } catch (e) { clearTimeout(to); err = e; }
+    } catch (e) { clearTimeout(to); reasons.push(e.name === "AbortError" ? "timeout" : e.message); }
   }
-  throw err;
+  throw new Error(`none of the ${order.length} free relay routes worked (${[...new Set(reasons)].slice(0, 3).join(", ")})`);
 }
 
 async function yahoo(host, code, range) {
@@ -497,6 +516,8 @@ try { JSON.parse(localStorage.getItem("tasi_hl") || "[]").forEach(c => hl.add(c)
 function saveHl() { try { localStorage.setItem("tasi_hl", JSON.stringify([...hl])); } catch (e) {} }
 function updateHlBtn() { $("clearhl").disabled = !hl.size; $("clearhl").textContent = hl.size ? `Clear highlights (${hl.size})` : "Clear highlights"; }
 $("results").addEventListener("click", ev => {
+  const dbn = ev.target.closest(".dbtn");
+  if (dbn) { openDividends(dbn.closest("tr").dataset.code); return; }
   const cb = ev.target.closest(".cbtn");
   if (cb) { toggleChart(cb.closest("tr")); return; }
   if (ev.target.closest("a")) return; // let links open normally
@@ -842,7 +863,7 @@ function showPrevInfo() {
   $("prevInfo").textContent = txt;
 }
 const isNew = r => prevKeys ? !prevKeys.has(keyOf(r)) : false;
-function idCell(r) { return r.code + (isNew(r) ? '<span class="badge">NEW</span>' : "") + '<button class="cbtn" title="Show or hide chart">📈</button>'; }
+function idCell(r) { return r.code + (isNew(r) ? '<span class="badge">NEW</span>' : "") + '<button class="cbtn" title="Show or hide chart">📈</button><button class="cbtn dbtn" title="Dividends">💰</button>'; }
 function volCell(r) {
   if (r.rv == null) return '<span style="color:var(--muted)">n/a</span>';
   return `<span class="${r.rv >= 1.5 ? "up" : ""}">${r.rv.toFixed(1)}x${r.rv >= 1.5 ? " ▲" : ""}</span>`;
@@ -1004,7 +1025,7 @@ function showTab(name) {
 }
 document.querySelectorAll(".tab").forEach(b => { b.onclick = () => { showTab(b.dataset.tab); window.scrollTo(0, 0); }; });
 let savedTab = "scan"; try { savedTab = localStorage.getItem("tasi_tab") || "scan"; } catch (e) {}
-showTab(["scan", "market", "alerts", "settings"].includes(savedTab) ? savedTab : "scan");
+showTab(["scan", "market", "dividends", "alerts", "settings"].includes(savedTab) ? savedTab : "scan");
 
 function labelTables(root) { // lets the phone layout show "Label: value" for every cell
   root.querySelectorAll("table").forEach(tb => {
@@ -1021,6 +1042,117 @@ function updateTabBadges() {
   $("tb_alerts").textContent = trig ? String(trig) : (alerts.length ? String(alerts.length) : "");
   $("tb_alerts").classList.toggle("alerted", trig > 0);
 }
+
+// ---------- Dividends window ----------
+const divCache = new Map();
+Object.entries(META).sort().forEach(([c, m]) => { const o = document.createElement("option"); o.value = `${c} ${m[0]}`; $("dl_shares").appendChild(o); });
+
+async function fetchDividends(code) {
+  if (divCache.has(code)) return divCache.get(code);
+  let list = null, price = null, source = "";
+  try { // 1) the daily data file, when it carries dividends
+    if ($("s_file").checked) {
+      const s = (await loadFile()).stocks[code];
+      if (s && Array.isArray(s.div)) { list = s.div.map(([d, a]) => ({ d: ymd(d), a })); price = s.c[s.c.length - 1]; source = "daily data file"; }
+    }
+  } catch (e) { /* file not available, use the live source */ }
+  if (!list) { // 2) live from Yahoo Finance through the relays
+    const j = await fetchJSON(`https://query1.finance.yahoo.com/v8/finance/chart/${code}.SR?range=5y&interval=1d&events=div`);
+    const res = j.chart && j.chart.result && j.chart.result[0];
+    if (!res) throw new Error("no data");
+    list = Object.values((res.events && res.events.dividends) || {}).map(e => ({ d: new Date(e.date * 1000), a: e.amount }));
+    price = res.meta && res.meta.regularMarketPrice != null ? res.meta.regularMarketPrice : null;
+    source = "Yahoo Finance (live)";
+  }
+  list = list.filter(x => x.a > 0).sort((a, b) => a.d - b.d);
+  const out = { list, price, source };
+  divCache.set(code, out);
+  return out;
+}
+
+function analyseDiv(list, now) { // payment frequency from the gaps between the latest ex-dividend dates
+  if (!list.length) return null;
+  const recent = list.slice(-4), gaps = [];
+  for (let i = 1; i < recent.length; i++) gaps.push((recent[i].d - recent[i - 1].d) / 86400000);
+  let med = null;
+  if (gaps.length) { const s = gaps.slice().sort((a, b) => a - b), m = Math.floor(s.length / 2); med = s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
+  let freq, n;
+  if (med == null) { freq = "Cannot tell (only one payment found)"; n = 1; }
+  else if (med < 135) { freq = "Quarterly (every 3 months)"; n = 4; }
+  else if (med < 270) { freq = "Semi-annual (every 6 months)"; n = 2; }
+  else if (med < 500) { freq = "Annual (once a year)"; n = 1; }
+  else { freq = "Irregular"; n = 2; }
+  const last = list[list.length - 1], daysSince = (now - last.d) / 86400000;
+  const ttm = list.filter(x => now - x.d <= 365 * 86400000).reduce((s, x) => s + x.a, 0);
+  return { freq, n, med, last, daysSince, ttm, paused: med != null && daysSince > med * 1.6 };
+}
+
+function renderDividends(code, data) {
+  const now = new Date(), A = analyseDiv(data.list, now), meta = META[code] || ["", ""];
+  const out = $("d_out");
+  if (!A) { out.innerHTML = `<div class="card"><h2>${code} ${meta[0]}</h2><div class="empty">No dividend records found for this share. It may pay no dividends, or the data source does not have them. Check the Saudi Exchange or the company announcements.</div><div style="margin-top:8px">${links(code)}</div></div>`; return; }
+  const sel = $("d_n").value, n = sel === "auto" ? A.n : +sel;
+  const shown = data.list.slice(-n).reverse(), all = data.list.slice().reverse();
+  const fmtD = d => d.toISOString().slice(0, 10);
+  let rows = "";
+  for (const x of shown) {
+    const idx = all.indexOf(x), prev = all[idx + 1];
+    const chg = prev ? ((x.a / prev.a - 1) * 100) : null;
+    rows += `<tr><td>${fmtD(x.d)}</td><td>${x.a.toFixed(2)}</td><td class="${chg == null ? "" : chg >= 0 ? "up" : "down"}">${chg == null ? "n/a" : (chg >= 0 ? "+" : "") + chg.toFixed(1) + "%"}</td><td>${Math.floor((now - x.d) / 86400000)}</td></tr>`;
+  }
+  let next = "n/a";
+  if (A.med != null) {
+    if (A.paused) next = "No payment for " + Math.floor(A.daysSince) + " days, longer than usual";
+    else { const nd = new Date(A.last.d.getTime() + A.med * 86400000); next = "About " + fmtD(nd) + " (estimate)"; }
+  }
+  const yld = data.price ? (A.ttm / data.price * 100).toFixed(2) + "%" : "n/a";
+  out.innerHTML = `<div class="card">
+    <h2>${code} ${meta[0]} <span style="font-weight:400;color:var(--muted);font-size:13px">${meta[1]}</span></h2>
+    <div class="tiles">
+      <div class="tile"><small>Payment frequency</small><b style="font-size:16px">${A.freq}</b></div>
+      <div class="tile"><small>Paid in last 12 months (per share)</small><b>${A.ttm.toFixed(2)} SAR</b></div>
+      <div class="tile"><small>Approx. yield on the last price${data.price ? " (" + data.price.toFixed(2) + ")" : ""}</small><b>${yld}</b></div>
+      <div class="tile"><small>Next ex-dividend date</small><b style="font-size:15px">${next}</b></div>
+    </div>
+    <div class="tablewrap"><table><tr><th>Ex-dividend date</th><th>Amount (SAR per share)</th><th>Change vs the payment before</th><th>Days ago</th></tr>${rows}</table></div>
+    <div class="note" style="margin-top:8px">Showing the last ${shown.length} dividend(s)${sel === "auto" ? " (automatic rule: 4 for quarterly payers, 2 for semi-annual, 1 for yearly)" : ""}. Dates are ex-dividend dates; announcement and payment dates can differ. Source: ${data.source}. Always confirm on the Saudi Exchange or the company announcement.</div>
+    <div style="margin-top:8px">${links(code)}<a target="_blank" rel="noopener" href="https://www.tradingview.com/symbols/TADAWUL-${code}/financials-dividends/">TradingView dividends</a></div>
+  </div>`;
+  labelTables(out);
+}
+
+async function showDividends(code) {
+  $("d_status").textContent = "Loading dividends for " + code + "...";
+  $("d_out").innerHTML = "";
+  try { const data = await fetchDividends(code); $("d_status").textContent = ""; renderDividends(code, data); }
+  catch (e) {
+    $("d_status").textContent = "";
+    $("d_out").innerHTML = `<div class="card"><h2>${code} ${(META[code] || [""])[0]}</h2>
+      <div class="errtxt" style="margin-bottom:8px">Could not load dividend data: ${e.message}.</div>
+      <div class="note" style="line-height:1.7">The free relay services this page uses to reach Yahoo Finance are often blocked or down. What you can do:<br>
+      1. Use the <b>Daily data file</b> (Settings tab). It already contains the dividends, needs no relay, and works when the page is opened from your GitHub Pages address, or by picking the downloaded <code>tasi_data.json</code> file there.<br>
+      2. Turn off an ad blocker or VPN for this page, then press Search again.<br>
+      3. See this share's dividends directly on the sites below.</div>
+      <div style="margin-top:10px">${links(code)}<a target="_blank" rel="noopener" href="https://www.tradingview.com/symbols/TADAWUL-${code}/financials-dividends/">TradingView dividends</a></div></div>`;
+  }
+}
+
+function searchDividends() {
+  const q = $("d_q").value.trim();
+  if (!q) { $("d_status").textContent = "Type a share code or a company name."; return; }
+  const m4 = q.match(/^(\d{4})(?:\.SR)?(?:\s|$)/i);
+  if (m4) { if (!META[m4[1]]) { $("d_status").textContent = "Code " + m4[1] + " is not in the stock list. Trying it anyway..."; } showDividends(m4[1]); return; }
+  const hits = Object.entries(META).filter(([c, m]) => m[0].toLowerCase().includes(q.toLowerCase()));
+  if (!hits.length) { $("d_status").textContent = "No share matches \"" + q + "\"."; $("d_out").innerHTML = ""; return; }
+  if (hits.length === 1) { showDividends(hits[0][0]); return; }
+  $("d_status").textContent = hits.length + " shares match. Pick one:";
+  $("d_out").innerHTML = '<div class="card">' + hits.slice(0, 30).map(([c, m]) => `<button class="sec" data-pick="${c}" style="margin:0 6px 6px 0">${c} ${m[0]}</button>`).join("") + "</div>";
+}
+function openDividends(code) { showTab("dividends"); $("d_q").value = code; window.scrollTo(0, 0); showDividends(code); }
+$("d_go").onclick = searchDividends;
+$("d_q").addEventListener("keydown", ev => { if (ev.key === "Enter") searchDividends(); });
+$("d_n").addEventListener("input", () => { const c = ($("d_q").value.match(/^(\d{4})/) || [])[1]; if (c && divCache.has(c)) renderDividends(c, divCache.get(c)); });
+$("d_out").addEventListener("click", ev => { const b = ev.target.closest("button[data-pick]"); if (b) { $("d_q").value = b.dataset.pick; showDividends(b.dataset.pick); } });
 </script>
 </body>
 </html>

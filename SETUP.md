@@ -57,3 +57,6 @@ Open your GitHub Pages address (not the file from your disk), then:
 - **Android (Chrome):** the three-dot menu, then *Install app* or *Add to Home screen*.
 - **Windows or Mac (Chrome or Edge):** the install icon in the address bar, or menu, *Save and share* (Chrome) / *Apps* (Edge), then *Install*.
 The green chart icon is used for the shortcut. Upload `icon-192.png`, `icon-512.png` and `manifest.webmanifest` next to `index.html` in the repository so the installed app also gets the icon and name.
+
+## Dividends tab
+The daily script also saves each share's dividend history in `data/tasi_data.json`, so the **Dividends** tab opens instantly. Search by code or name; it shows the last 4 dividends for quarterly payers, 2 for semi-annual payers and 1 for yearly payers. If the data file has no dividends yet (an older file), the page asks Yahoo Finance live instead. Run the daily script once more to refresh the file.

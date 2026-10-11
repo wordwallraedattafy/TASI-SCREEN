@@ -137,7 +137,7 @@ def fetch_history(code):
     last = None
     for host, tries in (("query1", 2), ("query2", 1)):
         try:
-            j = http_get_json(f"https://{host}.finance.yahoo.com/v8/finance/chart/{code}.SR?range=max&interval=1d", retries=tries)
+            j = http_get_json(f"https://{host}.finance.yahoo.com/v8/finance/chart/{code}.SR?range=max&interval=1d&events=div", retries=tries)
             return parse_history(j)
         except Exception as e:  # try the other host
             last = e
@@ -159,13 +159,20 @@ def parse_history(j):
         bars.append((day_int(t), round(c, 3), round(lo, 3), round(hi, 3), v))
     if not bars:
         raise ValueError("no bars")
+    divs = []
+    for e in ((res.get("events") or {}).get("dividends") or {}).values():
+        try:
+            divs.append([day_int(e["date"]), round(float(e["amount"]), 4)])
+        except (KeyError, TypeError, ValueError):
+            pass
+    divs.sort()
     n = len(bars)
     off = max(0, n - KEEP)
     keep = bars[off:]
     return {
         "d": [b[0] for b in keep], "c": [b[1] for b in keep], "l": [b[2] for b in keep],
         "h": [b[3] for b in keep], "v": [b[4] for b in keep],
-        "off": off, "olderMin": min(b[2] for b in bars[:off]) if off else None, "since": bars[0][0],
+        "div": divs[-24:], "off": off, "olderMin": min(b[2] for b in bars[:off]) if off else None, "since": bars[0][0],
     }
 
 
