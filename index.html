@@ -152,6 +152,9 @@
       <label class="chk"><input type="checkbox" class="fib" value="61.8" checked> Fib 61.8%</label>
       <div><label for="fibN">Fib swing window (days)</label><input type="number" id="fibN" value="120" min="30" max="500"></div>
       <div><label for="fibM">Min swing size (%)</label><input type="number" id="fibM" value="10" min="1" max="90"></div>
+      <label class="chk"><input type="checkbox" id="c_ew3" checked> Elliott: start of wave 3</label>
+      <label class="chk"><input type="checkbox" id="c_ew4" checked> Elliott: end of wave 4</label>
+      <div><label for="ewS">Elliott swing size (%)</label><input type="number" id="ewS" value="7" min="3" max="50"></div>
       <label class="chk"><input type="checkbox" id="below"> Also show crosses below (MA, RSI and Fibonacci pullbacks)</label>
     </div>
     <div class="row">
@@ -283,7 +286,7 @@
 
 
   <div class="card note"><h2>Notes</h2>
-    <b>Notes.</b> The Dividends tab reads dividends from the daily data file when it has them, otherwise live from Yahoo Finance; the 💰 button in a result row opens it for that share. A green tick before a share in the Price alerts tab means its price has passed your alert price; the same green mark starts each line of the notification. Alerts fired by the GitHub background check are marked too (the page reads state.json). The "Daily data file" source reads data/tasi_data.json, which the automation script refreshes after each trading day, so scans take seconds and need no relays. Price alerts: prices come from Yahoo Finance and can be delayed (often about 15 minutes), so an alert fires when the delayed price passes your level. Between two checks the tool also looks at the day's high and low, so a quick move through your price is not missed. Alerts only run while this page is open. Notifications are sent from this page, so they only work while it is open. Browser notifications may be blocked when the file is opened from your disk; ntfy, Telegram and Discord are more reliable. Anyone who knows your ntfy topic name can read your alerts, so use a long random name. Fibonacci: the tool takes the highest high and lowest low of the swing window (default 120 days; the swing must be at least the minimum size). If the low came after the high, it levels the rebound at 38.2%, 50% and 61.8% of that drop and lists stocks whose close just crossed above the level. With "Also show crosses below" ticked, it also lists pullbacks that crossed down through a level after a rally. Opening a Fibonacci row's chart draws the swing levels. The market overview covers only the stocks you scanned, so scan the full list for a true picture; "last session" is the most recent trading day in the data. Click the chart button in a row to open a 120-day chart with the 50 and 200-day averages and the signal date. "Vol x" is the volume on the signal day divided by the average of the previous 20 days; 1.5x or more is marked as high, and high volume makes a signal more meaningful. "NEW" marks signals that were not in the last completed scan on this computer; the first scan has nothing to compare with. RSI uses Wilder's method on daily closes (period and level are adjustable; default 14 and 50). For RSI and moving-average rows, "VsReference" in the CSV is the distance from the average (%) or the points above the RSI level. Open this file from your computer in a browser. A "new low" means the day's lowest price fell below every earlier low in the window: the previous 252 trading days for the 52-week low, and the full available history for the all-time low. "All-time" only means as far back as the source's data goes (shown in the "Data since" column), and a stock needs at least a year of history to qualify. Prices are not adjusted for stock splits or capital changes, so an old split can create a false all-time low; check the chart through the links. Speed: the scan first loads 2 years of prices per stock and downloads the full history only for stocks at a new 52-week low; raise "Parallel requests" for speed, but too many can make the free relays refuse requests. Yahoo requests go through public CORS relays and can be slow or blocked. The two Yahoo options share the same data; only Twelve Data is independent. Data can be delayed. This is a screening aid, not investment advice.
+    <b>Notes.</b> Elliott waves: the tool finds swing highs and lows (a swing is a move of at least the chosen size), then looks for the textbook long pattern: wave 2 not below the start of wave 1 and retracing 30% to 85% of it (start of wave 3), or wave 3 longer than wave 1 followed by a wave 4 pullback of 24% to 62% that does not enter wave 1 territory (end of wave 4). Wave counting is subjective, so treat these as candidates and confirm on the chart (the chart button numbers the swings). The Dividends tab reads dividends from the daily data file when it has them, otherwise live from Yahoo Finance; the 💰 button in a result row opens it for that share. A green tick before a share in the Price alerts tab means its price has passed your alert price; the same green mark starts each line of the notification. Alerts fired by the GitHub background check are marked too (the page reads state.json). The "Daily data file" source reads data/tasi_data.json, which the automation script refreshes after each trading day, so scans take seconds and need no relays. Price alerts: prices come from Yahoo Finance and can be delayed (often about 15 minutes), so an alert fires when the delayed price passes your level. Between two checks the tool also looks at the day's high and low, so a quick move through your price is not missed. Alerts only run while this page is open. Notifications are sent from this page, so they only work while it is open. Browser notifications may be blocked when the file is opened from your disk; ntfy, Telegram and Discord are more reliable. Anyone who knows your ntfy topic name can read your alerts, so use a long random name. Fibonacci: the tool takes the highest high and lowest low of the swing window (default 120 days; the swing must be at least the minimum size). If the low came after the high, it levels the rebound at 38.2%, 50% and 61.8% of that drop and lists stocks whose close just crossed above the level. With "Also show crosses below" ticked, it also lists pullbacks that crossed down through a level after a rally. Opening a Fibonacci row's chart draws the swing levels. The market overview covers only the stocks you scanned, so scan the full list for a true picture; "last session" is the most recent trading day in the data. Click the chart button in a row to open a 120-day chart with the 50 and 200-day averages and the signal date. "Vol x" is the volume on the signal day divided by the average of the previous 20 days; 1.5x or more is marked as high, and high volume makes a signal more meaningful. "NEW" marks signals that were not in the last completed scan on this computer; the first scan has nothing to compare with. RSI uses Wilder's method on daily closes (period and level are adjustable; default 14 and 50). For RSI and moving-average rows, "VsReference" in the CSV is the distance from the average (%) or the points above the RSI level. Open this file from your computer in a browser. A "new low" means the day's lowest price fell below every earlier low in the window: the previous 252 trading days for the 52-week low, and the full available history for the all-time low. "All-time" only means as far back as the source's data goes (shown in the "Data since" column), and a stock needs at least a year of history to qualify. Prices are not adjusted for stock splits or capital changes, so an old split can create a false all-time low; check the chart through the links. Speed: the scan first loads 2 years of prices per stock and downloads the full history only for stocks at a new 52-week low; raise "Parallel requests" for speed, but too many can make the free relays refuse requests. Yahoo requests go through public CORS relays and can be slow or blocked. The two Yahoo options share the same data; only Twelve Data is independent. Data can be delayed. This is a screening aid, not investment advice.
   </div>
 
   </section>
@@ -434,6 +437,80 @@ function minLow(arr, from, to) { // inclusive from..to
   let m = Infinity; for (let i = Math.max(0, from); i <= to; i++) if (arr[i].l < m) m = arr[i].l; return m;
 }
 
+// ---- Elliott waves (long side), rule-based ----
+function zigzag(data, thr) { // swing points: a move of at least thr (fraction) against the trend confirms a pivot
+  const piv = [];
+  let dir = 0, hi = data[0].h, lo = data[0].l, hiI = 0, loI = 0, ext = 0, extI = 0;
+  for (let i = 1; i < data.length; i++) {
+    const h = data[i].h, l = data[i].l;
+    if (dir === 0) {
+      if (h > hi) { hi = h; hiI = i; }
+      if (l < lo) { lo = l; loI = i; }
+      if (hi / lo - 1 >= thr) {
+        if (loI < hiI) { piv.push({ i: loI, p: lo, t: "L" }); dir = 1; ext = hi; extI = hiI; }
+        else { piv.push({ i: hiI, p: hi, t: "H" }); dir = -1; ext = lo; extI = loI; }
+      }
+    } else if (dir === 1) {
+      if (h > ext) { ext = h; extI = i; }
+      else if (l <= ext * (1 - thr)) { piv.push({ i: extI, p: ext, t: "H" }); dir = -1; ext = l; extI = i; }
+    } else {
+      if (l < ext) { ext = l; extI = i; }
+      else if (h >= ext * (1 + thr)) { piv.push({ i: extI, p: ext, t: "L" }); dir = 1; ext = h; extI = i; }
+    }
+  }
+  return { piv, dir, ext, extI };
+}
+
+function elliott(data, thrPct, want3, want4) {
+  const out = [], zz = zigzag(data, thrPct / 100), P = zz.piv, last = data.length - 1, c = data[last].c;
+  const dt = i => day(data[i].d), f2 = x => x.toFixed(2);
+  const pt = q => ({ date: dt(q.i), price: q.p, i: q.i });
+  const attr = arr => arr.map((q, k) => `${dt(q.i)}:${f2(q.p)}:${k}`).join("|");
+  // Beginning of wave 3: 0 (low), 1 (high), 2 (low) found, and a new up-leg has started from the wave-2 low
+  if (want3 && zz.dir === 1 && P.length >= 3) {
+    const p2 = P[P.length - 1], p1 = P[P.length - 2], p0 = P[P.length - 3];
+    if (p2.t === "L" && p1.t === "H" && p0.t === "L") {
+      const len1 = p1.p - p0.p, retr = (p1.p - p2.p) / len1;
+      if (p2.p > p0.p && retr >= 0.30 && retr <= 0.85 && last - p2.i <= 40 && c > p2.p && c <= p1.p + 0.5 * len1) {
+        out.push({ sig: "EW3", dir: "START", date: dt(p2.i), close: c, ref: p2.p, pct: (c / p2.p - 1) * 100, rv: null,
+          note: `wave-2 low ${f2(p2.p)} (${dt(p2.i)}), wave 2 retraced ${(retr * 100).toFixed(0)}% of wave 1, targets ${f2(p2.p + len1)} / ${f2(p2.p + 1.618 * len1)}`,
+          ew: { pts: [pt(p0), pt(p1), pt(p2)], retr, t1: p2.p + len1, t2: p2.p + 1.618 * len1, broke: c > p1.p }, ewAttr: attr([p0, p1, p2]) });
+      }
+    }
+  }
+  // End of wave 4: 0-1-2-3 found and wave 4 has pulled back into its usual zone (or its low is already confirmed)
+  if (want4) {
+    let q = null, confirmed = false;
+    if (zz.dir === -1 && P.length >= 4) {
+      const s = P.slice(-4);
+      if (s[0].t === "L" && s[1].t === "H" && s[2].t === "L" && s[3].t === "H") q = [...s, { i: zz.extI, p: zz.ext, t: "L" }];
+    } else if (zz.dir === 1 && P.length >= 5) {
+      const s = P.slice(-5);
+      if (s[0].t === "L" && s[1].t === "H" && s[2].t === "L" && s[3].t === "H" && s[4].t === "L") { q = s; confirmed = true; }
+    }
+    if (q) {
+      const [p0, p1, p2, p3, p4] = q, len1 = p1.p - p0.p, len3 = p3.p - p2.p, retr4 = (p3.p - p4.p) / len3;
+      const fresh = confirmed ? last - p4.i <= 30 : last - p3.i <= 90;
+      if (p2.p > p0.p && p3.p > p1.p && len3 > len1 && p4.p > p1.p && retr4 >= 0.236 && retr4 <= 0.618 && p4.i - p3.i >= 3 && fresh) {
+        let status = "CONF", text = "wave 4 low confirmed, wave 5 may be starting";
+        if (!confirmed) {
+          if ((p3.p - c) / len3 < 0.20) status = null;
+          else if (c / p4.p - 1 >= 0.02) { status = "TURN"; text = "wave 4 low in and price bouncing"; }
+          else { status = "ZONE"; text = "wave 4 pullback in its zone, waiting for a turn"; }
+        }
+        if (status) {
+          const t5 = p4.p + len1, t5b = p4.p + 0.618 * (p3.p - p0.p);
+          out.push({ sig: "EW4", dir: status, date: dt(p3.i), close: c, ref: p4.p, pct: (c / p4.p - 1) * 100, rv: null,
+            note: `${text}; wave 4 low ${f2(p4.p)} (${dt(p4.i)}), retraced ${(retr4 * 100).toFixed(0)}% of wave 3, wave-5 targets ${f2(t5)} / ${f2(t5b)}`,
+            ew: { pts: [p0, p1, p2, p3, p4].map(pt), retr4, status, t5, t5b, h1: p1.p }, ewAttr: attr([p0, p1, p2, p3, p4]) });
+        }
+      }
+    }
+  }
+  // the same swings cannot be both the end of wave 4 and a brand-new wave 3: keep the wave-4 reading
+  return out.some(h => h.sig === "EW4") ? out.filter(h => h.sig !== "EW3") : out;
+}
+
 function analyse(data, opt) {
   const hits = [], last = data.length - 1, since = day(data[0].d);
   // Moving-average crosses
@@ -452,6 +529,7 @@ function analyse(data, opt) {
       }
     }
   }
+  if ((opt.ew3 || opt.ew4) && data.length >= 60) for (const h of elliott(data, opt.ewS, opt.ew3, opt.ew4)) hits.push({ ...h, since });
   // Fibonacci retracement of the latest swing (highest high / lowest low in the window)
   if (opt.fib.length && data.length > opt.fibN + opt.lookback + 2) {
     const from = last - opt.fibN + 1;
@@ -548,13 +626,14 @@ $("go").onclick = async () => {
     periods: [...document.querySelectorAll(".ma:checked")].map(x => +x.value),
     lookback: Math.max(1, +$("days").value || 3),
     below: $("below").checked, atl: $("c_atl").checked, low52: $("c_low52").checked,
+    ew3: $("c_ew3").checked, ew4: $("c_ew4").checked, ewS: Math.max(3, +$("ewS").value || 7),
     fib: [...document.querySelectorAll(".fib:checked")].map(x => +x.value), fibN: Math.max(30, +$("fibN").value || 120), fibM: +$("fibM").value || 10,
     rsi: $("c_rsi").checked, rsiP: Math.max(2, +$("rsiP").value || 14), rsiL: +$("rsiL").value || 50
   };
   const cross = $("mode").value === "cross", sources = getSources();
   curOpt = opt; loadPrev();
   cache.clear(); if (!pickedText) { fileDb = null; filePromise = null; }
-  if (!codes.length || !(opt.periods.length || opt.atl || opt.low52 || opt.rsi || opt.fib.length)) { $("status").textContent = "Add at least one code and one signal."; return; }
+  if (!codes.length || !(opt.periods.length || opt.atl || opt.low52 || opt.rsi || opt.fib.length || opt.ew3 || opt.ew4)) { $("status").textContent = "Add at least one code and one signal."; return; }
   if (!sources.length) { $("status").textContent = "Select at least one data source (Twelve Data needs a key)."; return; }
 
   breadth.clear(); seriesStore.clear(); openCharts.clear(); rows = []; $("results").innerHTML = ""; $("csv").disabled = true; $("go").disabled = true;
@@ -573,7 +652,7 @@ $("go").onclick = async () => {
         let hits = hits1.filter(h => h.sig !== "LOW52" || opt.low52);
         // Stage 2: full history only for stocks already at a new 52-week low (an all-time low must be one)
         if (opt.atl && hits1.some(h => h.sig === "LOW52"))
-          hits = hits.concat(analyse(await src.get(code, "max"), { ...opt, periods: [], rsi: false, fib: [], below: false, atl: true, low52: false }));
+          hits = hits.concat(analyse(await src.get(code, "max"), { ...opt, periods: [], rsi: false, fib: [], ew3: false, ew4: false, below: false, atl: true, low52: false }));
         answered.push(src.name); usedCount[src.name] = (usedCount[src.name] || 0) + 1;
         for (const h of hits) {
           const key = h.sig + "|" + h.dir;
@@ -655,11 +734,13 @@ function sigName(r) {
   if (r.sig === "LOW52") return "new 52-week low";
   if (r.sig === "RSI") return "RSI cross";
   if (r.sig.startsWith("FIB")) return "Fib " + r.sig.slice(3) + "%";
+  if (r.sig === "EW3") return "Elliott wave 3 start";
+  if (r.sig === "EW4") return "Elliott wave 4 end";
   return r.sig;
 }
 function buildMessage(list) {
   const lines = list.slice(0, 15).map(r =>
-    `${r.code} ${META[r.code] ? META[r.code][0] : ""}: ${sigName(r)}${r.dir === "LOW" ? "" : " " + r.dir.toLowerCase()} (${r.date})${r.rv != null ? ", vol " + r.rv.toFixed(1) + "x" : ""}`);
+    `${r.code} ${META[r.code] ? META[r.code][0] : ""}: ${sigName(r)}${r.note ? " - " + r.note : r.dir === "LOW" ? "" : " " + r.dir.toLowerCase()} (${r.date})${r.rv != null ? ", vol " + r.rv.toFixed(1) + "x" : ""}`);
   if (list.length > 15) lines.push(`...and ${list.length - 15} more`);
   return `TASI screener: ${list.length} signal(s)\n` + lines.join("\n");
 }
@@ -879,15 +960,18 @@ function visibleRows() {
 ["f_sector", "f_vol", "f_new"].forEach(id => $(id).addEventListener("input", () => { if (curOpt) render(curOpt); }));
 showPrevInfo(); renderBreadth();
 
-function chartSVG(code, date, fib) {
+function chartSVG(code, date, fib, ew) {
   const d = seriesStore.get(code);
   if (!d || d.length < 30) return "<div class='empty'>No price data available for the chart.</div>";
-  const N = 120, end = d.length, start = Math.max(0, end - N);
+  const ewp = ew ? ew.split("|").map(s => { const [dd, pp, lb] = s.split(":"); return { date: dd, price: +pp, label: lb }; }) : null;
+  let N = 120;
+  if (ewp) { const k0 = d.findIndex(x => day(x.d) === ewp[0].date); if (k0 >= 0) N = Math.min(d.length, Math.max(60, d.length - k0 + 12)); }
+  const end = d.length, start = Math.max(0, end - N);
   const W = 760, H = 190, pl = 46, pr = 8, pt = 10, pb = 20;
   const close = [], s50 = [], s200 = [];
   for (let i = start; i < end; i++) { close.push(d[i].c); s50.push(sma(d, 50, i)); s200.push(sma(d, 200, i)); }
   const fp = fib ? fib.split("|").map(Number) : null; // [high, low, 1 = decline then rebound]
-  const vals = close.concat(s50.filter(v => v != null), s200.filter(v => v != null), fp ? [fp[0], fp[1]] : []);
+  const vals = close.concat(s50.filter(v => v != null), s200.filter(v => v != null), fp ? [fp[0], fp[1]] : [], ewp ? ewp.map(q => q.price) : []);
   let lo = Math.min(...vals), hi = Math.max(...vals); if (hi === lo) { hi += 1; lo -= 1; }
   const x = k => pl + k / Math.max(1, close.length - 1) * (W - pl - pr);
   const y = v => pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb);
@@ -899,6 +983,12 @@ function chartSVG(code, date, fib) {
       const v = dn ? Ll + lv / 100 * rg : Hh - lv / 100 * rg, mark = lv === 50 || lv === 61.8;
       fibSvg += `<line x1="${pl}" x2="${W - pr}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" style="stroke:var(--muted);stroke-width:${mark ? 1.2 : .6};stroke-dasharray:1 3"/><text x="${W - pr - 2}" y="${(y(v) - 2).toFixed(1)}" text-anchor="end" font-size="9" style="fill:var(--muted)">${lab} ${v.toFixed(2)}</text>`;
     }
+  }
+  let ewSvg = "";
+  if (ewp) {
+    const xy = ewp.map(q => { const k = d.findIndex((x, j) => j >= start && day(x.d) === q.date); return k < 0 ? null : { x: x(k - start), y: y(q.price), l: q.label }; }).filter(Boolean);
+    if (xy.length > 1) ewSvg += `<polyline points="${xy.map(a => a.x.toFixed(1) + "," + a.y.toFixed(1)).join(" ")}" fill="none" style="stroke:var(--text);stroke-width:1.4;stroke-dasharray:4 3;opacity:.8"/>`;
+    xy.forEach(a => { ewSvg += `<circle cx="${a.x.toFixed(1)}" cy="${a.y.toFixed(1)}" r="9" style="fill:var(--card);stroke:var(--text)"/><text x="${a.x.toFixed(1)}" y="${(a.y + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--text)">${a.l}</text>`; });
   }
   let sig = "";
   for (let k = 0; k < close.length; k++) if (day(d[start + k].d) === date) {
@@ -912,6 +1002,7 @@ function chartSVG(code, date, fib) {
     <text x="${pl}" y="${H - 5}" font-size="10" style="fill:var(--muted)">${day(d[start].d)}</text>
     <text x="${W - pr}" y="${H - 5}" text-anchor="end" font-size="10" style="fill:var(--muted)">${day(d[end - 1].d)}</text>
     ${fibSvg}
+    ${ewSvg}
     <path d="${path(s200)}" fill="none" style="stroke:var(--bad);stroke-width:1.2;stroke-dasharray:2 3"/>
     <path d="${path(s50)}" fill="none" style="stroke:var(--warn);stroke-width:1.2;stroke-dasharray:6 3;opacity:.9"/>
     <path d="${path(close)}" fill="none" style="stroke:var(--accent);stroke-width:1.8"/>
@@ -923,7 +1014,7 @@ function chartSVG(code, date, fib) {
 function insertChart(tr) {
   const row = document.createElement("tr");
   row.className = "chartrow";
-  row.innerHTML = `<td colspan="${tr.children.length}">${chartSVG(tr.dataset.code, tr.dataset.date, tr.dataset.fib)}</td>`;
+  row.innerHTML = `<td colspan="${tr.children.length}">${chartSVG(tr.dataset.code, tr.dataset.date, tr.dataset.fib, tr.dataset.ew)}</td>`;
   tr.after(row);
 }
 function toggleChart(tr) {
@@ -977,6 +1068,8 @@ function render(opt) {
   if (opt.atl) sections.push({ sig: "ATL", title: "New all-time low", low: true });
   if (opt.low52) sections.push({ sig: "LOW52", title: "New 52-week low", low: true });
   for (const n of opt.periods) sections.push({ sig: "MA" + n, title: `Crossed ${n}-day moving average`, n });
+  if (opt.ew3) sections.push({ sig: "EW3", title: "Elliott: beginning of wave 3", ew: 3 });
+  if (opt.ew4) sections.push({ sig: "EW4", title: "Elliott: end of wave 4", ew: 4 });
   for (const lv of opt.fib) sections.push({ sig: "FIB" + lv, title: `Price crossed the ${lv}% Fibonacci retracement`, fibLv: lv });
   if (opt.rsi) sections.push({ sig: "RSI", title: `RSI(${opt.rsiP}) crossed ${opt.rsiL}`, rsi: true });
 
@@ -985,7 +1078,22 @@ function render(opt) {
     const card = document.createElement("div"); card.className = "card"; card.dataset.sig = s.sig;
     let html = `<h2>${s.title} (${list.length})</h2>`;
     if (!list.length) html += `<div class="empty">${scanning ? "Searching... none found yet." : "No stocks found."}</div>`;
-    else if (s.fibLv) {
+    else if (s.ew === 3) {
+      html += `<div class="tablewrap"><table><tr><th>Code</th><th>Company</th><th>Sector</th><th>Wave 0 low</th><th>Wave 1 high</th><th>Wave 2 low</th><th>Wave 2 retrace</th><th>Price now</th><th>Gain from wave 2</th><th>Wave 3 targets</th><th>Invalid below</th><th>Sources</th><th>Open on</th></tr>`;
+      for (const r of list) {
+        const [a, b, c2] = r.ew.pts;
+        html += `<tr data-code="${r.code}" data-date="${r.date}" data-fib="" data-ew="${r.ewAttr}" class="${hl.has(r.code) ? "hl" : ""}"><td>${idCell(r)}</td><td>${META[r.code] ? META[r.code][0] : ""}</td><td>${META[r.code] ? META[r.code][1] : ""}</td><td>${a.price.toFixed(2)} (${a.date})</td><td>${b.price.toFixed(2)} (${b.date})</td><td>${c2.price.toFixed(2)} (${c2.date})</td><td>${(r.ew.retr * 100).toFixed(0)}%</td><td>${r.close.toFixed(2)}${r.ew.broke ? " (above wave 1 high)" : ""}</td><td class="up">${r.pct.toFixed(1)}%</td><td>${r.ew.t1.toFixed(2)} / ${r.ew.t2.toFixed(2)}</td><td>${c2.price.toFixed(2)}</td><td>${agree(r)}</td><td>${links(r.code)}</td></tr>`;
+      }
+      html += `</table></div>`;
+    } else if (s.ew === 4) {
+      html += `<div class="tablewrap"><table><tr><th>Code</th><th>Company</th><th>Sector</th><th>Status</th><th>Wave 3 high</th><th>Wave 4 low</th><th>Wave 4 retrace</th><th>Wave 1 high (limit)</th><th>Price now</th><th>Wave 5 targets</th><th>Sources</th><th>Open on</th></tr>`;
+      const label = { ZONE: "In wave 4 zone, waiting for a turn", TURN: "Turning up from wave 4 low", CONF: "Wave 4 low confirmed" };
+      for (const r of list) {
+        const p = r.ew.pts;
+        html += `<tr data-code="${r.code}" data-date="${r.date}" data-fib="" data-ew="${r.ewAttr}" class="${hl.has(r.code) ? "hl" : ""}"><td>${idCell(r)}</td><td>${META[r.code] ? META[r.code][0] : ""}</td><td>${META[r.code] ? META[r.code][1] : ""}</td><td class="${r.dir === "ZONE" ? "" : "up"}">${label[r.dir]}</td><td>${p[3].price.toFixed(2)} (${p[3].date})</td><td>${p[4].price.toFixed(2)} (${p[4].date})</td><td>${(r.ew.retr4 * 100).toFixed(0)}%</td><td>${r.ew.h1.toFixed(2)}</td><td>${r.close.toFixed(2)}</td><td>${r.ew.t5.toFixed(2)} / ${r.ew.t5b.toFixed(2)}</td><td>${agree(r)}</td><td>${links(r.code)}</td></tr>`;
+      }
+      html += `</table></div>`;
+    } else if (s.fibLv) {
       html += `<div class="tablewrap"><table><tr><th>Code</th><th>Company</th><th>Sector</th><th>Cross</th><th>Date</th><th>Swing high</th><th>Swing low</th><th>${s.fibLv}% level</th><th>Close</th><th>% vs level</th><th>Retraced</th><th>Vol x</th><th>Sources</th><th>Open on</th></tr>`;
       for (const r of list)
         html += `<tr data-code="${r.code}" data-date="${r.date}" data-fib="${r.fib}" class="${hl.has(r.code) ? "hl" : ""}"><td>${idCell(r)}</td><td>${META[r.code] ? META[r.code][0] : ""}</td><td>${META[r.code] ? META[r.code][1] : ""}</td><td class="${r.dir === "ABOVE" ? "up" : "down"}">${r.dir}</td><td>${r.date}</td><td>${r.fibH.toFixed(2)} (${r.hDate})</td><td>${r.fibL.toFixed(2)} (${r.lDate})</td><td>${r.ref.toFixed(2)}</td><td>${r.close.toFixed(2)}</td><td>${r.pct.toFixed(2)}%</td><td>${r.retr.toFixed(0)}%</td><td>${volCell(r)}</td><td>${agree(r)}</td><td>${links(r.code)}</td></tr>`;
@@ -1011,8 +1119,8 @@ function render(opt) {
 }
 
 $("csv").onclick = () => {
-  const head = "Code,Company,Sector,Signal,Direction,Date,LastClose,Reference,VsReference,VolumeX,New,DataSince,Sources";
-  const body = visibleRows().map(r => [r.code, `"${META[r.code] ? META[r.code][0] : ""}"`, `"${META[r.code] ? META[r.code][1] : ""}"`, r.sig, r.dir, r.date, r.close.toFixed(2), r.ref.toFixed(2), r.pct.toFixed(2), r.rv == null ? "" : r.rv.toFixed(2), isNew(r) ? "NEW" : "", r.since, `"${r.srcs.join(" | ")}"`].join(","));
+  const head = "Code,Company,Sector,Signal,Direction,Date,LastClose,Reference,VsReference,VolumeX,New,DataSince,Sources,Note";
+  const body = visibleRows().map(r => [r.code, `"${META[r.code] ? META[r.code][0] : ""}"`, `"${META[r.code] ? META[r.code][1] : ""}"`, r.sig, r.dir, r.date, r.close.toFixed(2), r.ref.toFixed(2), r.pct.toFixed(2), r.rv == null ? "" : r.rv.toFixed(2), isNew(r) ? "NEW" : "", r.since, `"${r.srcs.join(" | ")}"`, `"${r.note || ""}"`].join(","));
   const blob = new Blob(["\ufeff" + [head, ...body].join("\n")], { type: "text/csv" });
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "tasi_signals.csv"; a.click();
 };

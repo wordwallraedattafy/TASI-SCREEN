@@ -58,6 +58,9 @@ DEFAULT_CFG = {
         "low52": True,
         "atl": True,
         "below": False,
+        "ew3": True,
+        "ew4": True,
+        "ew_swing_pct": 7,
     },
     "notify": {
         "only_new": True,
@@ -351,7 +354,99 @@ def analyse(code, S, sg, lb):
             if lo[i] < prev:
                 add(sig, "LOW", i, close=c[last], ref=prev, pct=(lo[i] / prev - 1) * 100)
                 break
+    if (sg.get("ew3") or sg.get("ew4")) and len(c) >= 60:
+        hits += elliott(code, S, sg.get("ew_swing_pct", 7), sg.get("ew3"), sg.get("ew4"), since)
     return hits
+
+
+# ------------------------------------------------------- Elliott waves (long side)
+def zigzag(h, l, thr):
+    """Swing points: a move of at least thr (fraction) against the trend confirms a pivot."""
+    piv = []
+    direction, hi, lo, hi_i, lo_i, ext, ext_i = 0, h[0], l[0], 0, 0, 0.0, 0
+    for i in range(1, len(h)):
+        if direction == 0:
+            if h[i] > hi:
+                hi, hi_i = h[i], i
+            if l[i] < lo:
+                lo, lo_i = l[i], i
+            if hi / lo - 1 >= thr:
+                if lo_i < hi_i:
+                    piv.append((lo_i, lo, "L"))
+                    direction, ext, ext_i = 1, hi, hi_i
+                else:
+                    piv.append((hi_i, hi, "H"))
+                    direction, ext, ext_i = -1, lo, lo_i
+        elif direction == 1:
+            if h[i] > ext:
+                ext, ext_i = h[i], i
+            elif l[i] <= ext * (1 - thr):
+                piv.append((ext_i, ext, "H"))
+                direction, ext, ext_i = -1, l[i], i
+        else:
+            if l[i] < ext:
+                ext, ext_i = l[i], i
+            elif h[i] >= ext * (1 + thr):
+                piv.append((ext_i, ext, "L"))
+                direction, ext, ext_i = 1, h[i], i
+    return piv, direction, ext, ext_i
+
+
+def elliott(code, S, swing_pct, want3, want4, since):
+    """Beginning of wave 3 and end of wave 4 (textbook long impulse), same rules as the web page."""
+    out = []
+    c, lo, hi, d = S["c"], S["l"], S["h"], S["d"]
+    piv, direction, ext, ext_i = zigzag(hi, lo, swing_pct / 100)
+    last = len(c) - 1
+    px = c[last]
+    ds = lambda i: day_str(d[i])
+    f2 = lambda x: f"{x:.2f}"
+
+    def hit(sig, dr, date_i, ref, note):
+        out.append(dict(code=code, sig=sig, dir=dr, date=ds(date_i), close=px, ref=ref, pct=(px / ref - 1) * 100,
+                        rv=None, note=note, since=since))
+
+    if want3 and direction == 1 and len(piv) >= 3:
+        (i2, p2, t2), (i1, p1, t1), (i0, p0, t0) = piv[-1], piv[-2], piv[-3]
+        if t2 == "L" and t1 == "H" and t0 == "L":
+            len1 = p1 - p0
+            retr = (p1 - p2) / len1
+            if p2 > p0 and 0.30 <= retr <= 0.85 and last - i2 <= 40 and px > p2 and px <= p1 + 0.5 * len1:
+                hit("EW3", "START", i2, p2,
+                    f"wave-2 low {f2(p2)} ({ds(i2)}), wave 2 retraced {retr * 100:.0f}% of wave 1, "
+                    f"targets {f2(p2 + len1)} / {f2(p2 + 1.618 * len1)}")
+    if want4:
+        q, confirmed = None, False
+        if direction == -1 and len(piv) >= 4:
+            s4 = piv[-4:]
+            if [x[2] for x in s4] == ["L", "H", "L", "H"]:
+                q = s4 + [(ext_i, ext, "L")]
+        elif direction == 1 and len(piv) >= 5:
+            s5 = piv[-5:]
+            if [x[2] for x in s5] == ["L", "H", "L", "H", "L"]:
+                q, confirmed = s5, True
+        if q:
+            (i0, p0, _), (i1, p1, _), (i2, p2, _), (i3, p3, _), (i4, p4, _) = q
+            len1, len3 = p1 - p0, p3 - p2
+            retr4 = (p3 - p4) / len3
+            fresh = (last - i4 <= 30) if confirmed else (last - i3 <= 90)
+            if p2 > p0 and p3 > p1 and len3 > len1 and p4 > p1 and 0.236 <= retr4 <= 0.618 and i4 - i3 >= 3 and fresh:
+                status, text = "CONF", "wave 4 low confirmed, wave 5 may be starting"
+                if not confirmed:
+                    if (p3 - px) / len3 < 0.20:
+                        status = None
+                    elif px / p4 - 1 >= 0.02:
+                        status, text = "TURN", "wave 4 low in and price bouncing"
+                    else:
+                        status, text = "ZONE", "wave 4 pullback in its zone, waiting for a turn"
+                if status:
+                    t5, t5b = p4 + len1, p4 + 0.618 * (p3 - p0)
+                    hit("EW4", status, i3, p4,
+                        f"{text}; wave 4 low {f2(p4)} ({ds(i4)}), retraced {retr4 * 100:.0f}% of wave 3, "
+                        f"wave-5 targets {f2(t5)} / {f2(t5b)}")
+    if any(h["sig"] == "EW4" for h in out):   # same swings cannot be both a wave-4 end and a new wave 3
+        out = [h for h in out if h["sig"] != "EW3"]
+    return out
 
 
 def signal_key(h):
@@ -361,7 +456,8 @@ def signal_key(h):
 def sig_name(sig):
     if sig.startswith("MA"):
         return sig[2:] + "-day average"
-    return {"ATL": "new all-time low", "LOW52": "new 52-week low", "RSI": "RSI cross"}.get(
+    return {"ATL": "new all-time low", "LOW52": "new 52-week low", "RSI": "RSI cross",
+            "EW3": "Elliott wave 3 start", "EW4": "Elliott wave 4 end"}.get(
         sig, "Fib " + sig[3:] + "%" if sig.startswith("FIB") else sig)
 
 
@@ -459,7 +555,7 @@ def build_message(list_, stocks, max_lines):
     lines = []
     for h in list_[:max_lines]:
         name = stocks.get(h["code"], {}).get("name", "")
-        direction = "" if h["dir"] == "LOW" else " " + h["dir"].lower()
+        direction = (" - " + h["note"]) if h.get("note") else ("" if h["dir"] == "LOW" else " " + h["dir"].lower())
         vol = f", vol {h['rv']:.1f}x" if h["rv"] is not None else ""
         lines.append(f"{h['code']} {name}: {sig_name(h['sig'])}{direction} ({h['date']}){vol}")
     if len(list_) > max_lines:
